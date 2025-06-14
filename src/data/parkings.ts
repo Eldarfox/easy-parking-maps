@@ -6,10 +6,10 @@ export interface Parking {
   lat: number;
   lng: number;
   prices: { type: string; price: number; currency: string }[];
-  distance: number; // в метрах
+  distance: number;
+  totalSpaces: number;
 }
 
-// Используем ваши координаты и имена, добавляем заглушки для address, prices, distance.
 export const mockParkings: Parking[] = [
   {
     id: "1",
@@ -22,6 +22,7 @@ export const mockParkings: Parking[] = [
       { type: "Весь день", price: 350, currency: "сом" },
     ],
     distance: 200,
+    totalSpaces: 4,
   },
   {
     id: "2",
@@ -34,6 +35,7 @@ export const mockParkings: Parking[] = [
       { type: "Весь день", price: 400, currency: "сом" },
     ],
     distance: 400,
+    totalSpaces: 2,
   },
   {
     id: "3",
@@ -46,6 +48,7 @@ export const mockParkings: Parking[] = [
       { type: "Весь день", price: 280, currency: "сом" },
     ],
     distance: 500,
+    totalSpaces: 3,
   },
   {
     id: "4",
@@ -58,5 +61,6 @@ export const mockParkings: Parking[] = [
       { type: "Весь день", price: 450, currency: "сом" },
     ],
     distance: 1800,
+    totalSpaces: 1,
   },
 ];

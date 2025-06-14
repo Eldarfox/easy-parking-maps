@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Parking } from "@/data/parkings";
@@ -12,25 +13,20 @@ import ClockTimeSelector from "./ClockTimeSelector";
 
 const BOOKINGS_LS_KEY = "bookings_list_lovable";
 
-// Варианты времени для бронирования (например, с 08:00 до 23:00, шаг 1 час)
-const TIME_OPTIONS = [
-  "08:00 - 10:00",
-  "10:00 - 12:00",
-  "12:00 - 14:00",
-  "14:00 - 16:00",
-  "16:00 - 18:00",
-  "18:00 - 20:00",
-  "20:00 - 22:00",
-  "22:00 - 23:00",
-];
-
-type Props = {
-  open: boolean;
-  onClose: () => void;
-  parking: Parking | null;
+type BookingItem = {
+  id: number;
+  status: string;
+  title: string;
+  address: string;
+  date: string;
+  time: string;
+  place: string;
+  price: number;
+  parkingId: string;
+  spaceNum: number;
 };
 
-function getNextBookingId() {
+const getNextBookingId = () => {
   try {
     const arr = JSON.parse(localStorage.getItem(BOOKINGS_LS_KEY) || "[]");
     if (!Array.isArray(arr) || arr.length === 0) return 1;
@@ -38,10 +34,9 @@ function getNextBookingId() {
   } catch {
     return 1;
   }
-}
+};
 
-// Генерируем бронирование для Bookings
-function mapParkingToBooking(parking: Parking, date: Date, time: string) {
+function mapParkingToBooking(parking: Parking, date: Date, time: string, spaceNum: number) {
   return {
     id: getNextBookingId(),
     status: "active",
@@ -49,24 +44,40 @@ function mapParkingToBooking(parking: Parking, date: Date, time: string) {
     address: parking.address,
     date: format(date, "dd.MM.yyyy"),
     time,
-    // Для demo: транспонируем parking.id в букву + номер
-    place: "A-" + parking.id,
+    place: `Место #${spaceNum + 1}`,
     price: (parking.prices[0]?.price || 0),
-  }
+    parkingId: parking.id,
+    spaceNum,
+  };
 }
 
-const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
+const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Parking | null }> = ({
+  open,
+  onClose,
+  parking,
+}) => {
   const { toast } = useToast();
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  // Теперь null либо [start, end]
   const [selectedTimeRange, setSelectedTimeRange] = useState<[number, number] | null>(null);
   const [disabledHours, setDisabledHours] = useState<number[]>([]);
+  const [selectedSpace, setSelectedSpace] = useState<string>(""); // string index
 
+  // Достаем все бронирования из LS
+  const [allBookings, setAllBookings] = React.useState<BookingItem[]>([]);
+
+  // Обновляем выбор и список бронирований при открытии
   React.useEffect(() => {
     if (open) {
       setSelectedDate(undefined);
       setSelectedTimeRange(null);
+      setSelectedSpace("");
+      try {
+        const arr = JSON.parse(localStorage.getItem(BOOKINGS_LS_KEY) || "[]");
+        setAllBookings(Array.isArray(arr) ? arr : []);
+      } catch {
+        setAllBookings([]);
+      }
     }
   }, [open, parking]);
 
@@ -80,21 +91,56 @@ const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
 
   if (!parking) return null;
 
+  // Генерация строк времени из диапазона
+  const getTimeStr = () => {
+    if (!selectedTimeRange) return "";
+    const [start, end] = selectedTimeRange;
+    return `${start.toString().padStart(2, "0")}:00 - ${(end + 1).toString().padStart(2, "0")}:00`;
+  };
+
+  // Для текущей парковки, даты и времени строим массив зарезервированных мест
+  const unavailableSpaces = React.useMemo(() => {
+    if (!selectedDate || !selectedTimeRange) return [];
+    const thisDate = format(selectedDate, "dd.MM.yyyy");
+    const [selectedStart, selectedEnd] = selectedTimeRange;
+    return allBookings
+      .filter(
+        (b) =>
+          b.parkingId === parking.id &&
+          b.date === thisDate &&
+          // Диапазоны пересекаются по времени бронирования:
+          (() => {
+            const [bStart, bEnd] = b.time
+              .split(" - ")
+              .map((t) => parseInt(t.split(":")[0], 10));
+            return (
+              (selectedStart <= bEnd - 1 && selectedEnd >= bStart)
+            );
+          })()
+      )
+      .map((b) => b.spaceNum);
+  }, [allBookings, parking, selectedDate, selectedTimeRange]);
+
+  // Генерируем массив ID мест для селектора
+  const allSpaces = Array.from({ length: parking.totalSpaces }, (_, i) => i);
+
   const handleBooking = () => {
-    if (!selectedDate || !selectedTimeRange) return;
+    if (!selectedDate || !selectedTimeRange || selectedSpace === "") return;
 
     const arrRaw = localStorage.getItem(BOOKINGS_LS_KEY);
     let arr = [];
     try {
       arr = arrRaw ? JSON.parse(arrRaw) : [];
       if (!Array.isArray(arr)) arr = [];
-    } catch { arr = []; }
+    } catch {
+      arr = [];
+    }
 
     const [start, end] = selectedTimeRange;
-    const timeStr = `${start.toString().padStart(2,"0")}:00 - ${(end + 1).toString().padStart(2,"0")}:00`;
+    const timeStr = `${start.toString().padStart(2, "0")}:00 - ${(end + 1).toString().padStart(2, "0")}:00`;
 
     const booking = {
-      ...mapParkingToBooking(parking, selectedDate, timeStr),
+      ...mapParkingToBooking(parking, selectedDate, timeStr, parseInt(selectedSpace, 10)),
       time: timeStr,
     };
 
@@ -103,7 +149,7 @@ const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
 
     toast({
       title: "Бронирование успешно!",
-      description: `Парковка "${parking.name}" на ${booking.date} в ${booking.time} успешно забронирована.`,
+      description: `Парковка "${parking.name}", место #${parseInt(selectedSpace, 10) + 1} на ${booking.date} в ${booking.time} успешно забронирована.`,
       variant: "default",
     });
 
@@ -162,10 +208,35 @@ const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
               />
             </div>
           </div>
+          {/* Селектор парковочного места */}
+          <div className="mb-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+              <CircleParking className="w-4 h-4" />
+              Место парковки
+            </div>
+            <Select value={selectedSpace} onValueChange={setSelectedSpace} disabled={!selectedDate || !selectedTimeRange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите место" />
+              </SelectTrigger>
+              <SelectContent>
+                {allSpaces.map((spaceNum) =>
+                  unavailableSpaces.includes(spaceNum) ? (
+                    <SelectItem key={spaceNum} value={spaceNum.toString()} disabled>
+                      Место #{spaceNum + 1} (занято)
+                    </SelectItem>
+                  ) : (
+                    <SelectItem key={spaceNum} value={spaceNum.toString()}>
+                      Место #{spaceNum + 1}
+                    </SelectItem>
+                  )
+                )}
+              </SelectContent>
+            </Select>
+          </div>
           <Button
             className="w-full font-bold"
             onClick={handleBooking}
-            disabled={!selectedDate || !selectedTimeRange}
+            disabled={!selectedDate || !selectedTimeRange || selectedSpace === ""}
           >
             Забронировать
           </Button>
