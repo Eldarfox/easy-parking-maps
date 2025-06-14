@@ -1,33 +1,11 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-// Исходные данные для начального состояния
-const BOOKINGS_INITIAL = [
-  {
-    id: 1,
-    status: "active",
-    title: "Центральная парковка",
-    address: "ул. Тверская, 15",
-    date: "2024-01-15",
-    time: "14:00 - 18:00",
-    place: "A-15",
-    price: 600,
-  },
-  {
-    id: 2,
-    status: "completed",
-    title: "ТЦ Европейский",
-    address: "пл. Киевского Вокзала, 2",
-    date: "2024-01-12",
-    time: "10:00 - 16:00",
-    place: "B-23",
-    price: 720,
-  },
-];
+const BOOKINGS_LS_KEY = "bookings_list_lovable";
 
 function BookingStatus({status}: {status: string}) {
   if (status === "active")
@@ -56,7 +34,16 @@ function BookingCard({
   onCancel,
   onProlong,
 }: {
-  booking: typeof BOOKINGS_INITIAL[0];
+  booking: {
+    id: number;
+    status: string;
+    title: string;
+    address: string;
+    date: string;
+    time: string;
+    place: string;
+    price: number;
+  };
   onCancel?: () => void;
   onProlong?: () => void;
 }) {
@@ -105,11 +92,38 @@ function BookingCard({
 }
 
 const Bookings = () => {
-  const [bookings, setBookings] = useState(BOOKINGS_INITIAL);
+  const [bookings, setBookings] = useState<typeof initialLoad[]>([]);
   const { toast } = useToast();
 
+  // Функция получения массива броней из localStorage
+  function initialLoad() {
+    try {
+      const raw = localStorage.getItem(BOOKINGS_LS_KEY);
+      if (!raw) return [];
+      return JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+
+  // Подгрузка из localStorage при первом рендере
+  useEffect(() => {
+    setBookings(initialLoad());
+    // Подписка на внешние обновления ("браузерные" табы)
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === BOOKINGS_LS_KEY) {
+        setBookings(initialLoad());
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  // Отменить бронь
   const handleCancel = (id: number) => {
-    setBookings((prev) => prev.filter((b) => b.id !== id));
+    const updated = bookings.filter((b) => b.id !== id);
+    setBookings(updated);
+    localStorage.setItem(BOOKINGS_LS_KEY, JSON.stringify(updated));
     toast({
       title: "Бронирование отменено",
       description: "Вы отменили бронирование.",
@@ -117,13 +131,14 @@ const Bookings = () => {
     });
   };
 
-  const handleProlong = (booking: typeof BOOKINGS_INITIAL[0]) => {
+  // Продлить бронь
+  const handleProlong = (booking: any) => {
     toast({
       title: "Продление успешно",
       description: `Бронирование “${booking.title}” продлено на 2 часа.`,
       variant: "default"
     });
-    // Здесь можно добавить логику изменения даты/времени, если нужно.
+    // Тут можно обновить дату/время, если нужно.
   };
 
   return (

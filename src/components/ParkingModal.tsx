@@ -3,6 +3,9 @@ import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Parking } from "@/data/parkings";
 import { CircleParking } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+const BOOKINGS_LS_KEY = "bookings_list_lovable";
 
 type Props = {
   open: boolean;
@@ -10,8 +13,62 @@ type Props = {
   parking: Parking | null;
 };
 
+function getNextBookingId() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(BOOKINGS_LS_KEY) || "[]");
+    if (!Array.isArray(arr) || arr.length === 0) return 1;
+    return Math.max(...arr.map((x: any) => x.id || 1)) + 1;
+  } catch {
+    return 1;
+  }
+}
+
+// Генерируем бронирование для Bookings
+function mapParkingToBooking(parking: Parking) {
+  return {
+    id: getNextBookingId(),
+    status: "active",
+    title: parking.name,
+    address: parking.address,
+    date: new Date().toLocaleDateString("ru-RU"),
+    time: "09:00 - 21:00",
+    // Для demo: транспонируем parking.id в букву + номер
+    place: "A-" + parking.id,
+    price: (parking.prices[0]?.price || 0),
+  }
+}
+
 const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
+  const { toast } = useToast();
+
   if (!parking) return null;
+
+  const handleBooking = () => {
+    // 1. Считываем текущие брони
+    const arrRaw = localStorage.getItem(BOOKINGS_LS_KEY);
+    let arr = [];
+    try {
+      arr = arrRaw ? JSON.parse(arrRaw) : [];
+      if (!Array.isArray(arr)) arr = [];
+    } catch { arr = []; }
+
+    // 2. Создаем новую запись
+    const booking = mapParkingToBooking(parking);
+
+    // 3. Пушим, сохраняем
+    arr.unshift(booking); // новые сверху
+    localStorage.setItem(BOOKINGS_LS_KEY, JSON.stringify(arr));
+
+    // 4. Показываем тост
+    toast({
+      title: "Бронирование успешно!",
+      description: `Парковка "${parking.name}" успешно забронирована.`,
+      variant: "default",
+    });
+
+    // 5. Закрываем модал
+    onClose();
+  };
 
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
@@ -38,9 +95,9 @@ const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
           </div>
           <button
             className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded transition"
-            disabled
+            onClick={handleBooking}
           >
-            Забронировать (скоро)
+            Забронировать
           </button>
         </div>
       </DialogContent>
