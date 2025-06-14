@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import Cabinet from "./pages/Cabinet";
 import Tariffs from "./pages/Tariffs";
 import Wallet from "./pages/Wallet";
+import Bookings from "./pages/Bookings";
 import BottomBar from "@/components/BottomBar";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
         <div className="min-h-screen relative pb-16"> 
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/bookings" element={<Bookings />} />
             <Route path="/cabinet" element={<Cabinet />} />
             <Route path="/tariffs" element={<Tariffs />} />
             <Route path="/wallet" element={<Wallet />} />
