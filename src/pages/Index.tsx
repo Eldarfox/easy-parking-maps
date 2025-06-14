@@ -1,4 +1,3 @@
-
 import ParkingMap from "@/components/ParkingMap";
 import BottomBar from "@/components/BottomBar";
 
@@ -18,7 +17,6 @@ const Index = () => {
           <ParkingMap />
         </main>
       </div>
-      <BottomBar />
     </div>
   );
 };
