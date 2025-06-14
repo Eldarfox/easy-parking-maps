@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Parking } from "@/data/parkings";
@@ -61,12 +60,9 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedTimeRange, setSelectedTimeRange] = useState<[number, number] | null>(null);
   const [disabledHours, setDisabledHours] = useState<number[]>([]);
-  const [selectedSpace, setSelectedSpace] = useState<string>(""); // string index
-
-  // Достаем все бронирования из LS
+  const [selectedSpace, setSelectedSpace] = useState<string>("");
   const [allBookings, setAllBookings] = React.useState<BookingItem[]>([]);
 
-  // Обновляем выбор и список бронирований при открытии
   React.useEffect(() => {
     if (open) {
       setSelectedDate(undefined);
@@ -89,18 +85,9 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
     setDisabledHours([17, 18]);
   }, [selectedDate]);
 
-  if (!parking) return null;
-
-  // Генерация строк времени из диапазона
-  const getTimeStr = () => {
-    if (!selectedTimeRange) return "";
-    const [start, end] = selectedTimeRange;
-    return `${start.toString().padStart(2, "0")}:00 - ${(end + 1).toString().padStart(2, "0")}:00`;
-  };
-
-  // Для текущей парковки, даты и времени строим массив зарезервированных мест
+  // Use React.useMemo, but always, regardless of parking
   const unavailableSpaces = React.useMemo(() => {
-    if (!selectedDate || !selectedTimeRange) return [];
+    if (!parking || !selectedDate || !selectedTimeRange) return [];
     const thisDate = format(selectedDate, "dd.MM.yyyy");
     const [selectedStart, selectedEnd] = selectedTimeRange;
     return allBookings
@@ -108,7 +95,6 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
         (b) =>
           b.parkingId === parking.id &&
           b.date === thisDate &&
-          // Диапазоны пересекаются по времени бронирования:
           (() => {
             const [bStart, bEnd] = b.time
               .split(" - ")
@@ -121,8 +107,20 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
       .map((b) => b.spaceNum);
   }, [allBookings, parking, selectedDate, selectedTimeRange]);
 
-  // Генерируем массив ID мест для селектора
-  const allSpaces = Array.from({ length: parking.totalSpaces }, (_, i) => i);
+  // Generate spaces, or empty if no parking is selected
+  const allSpaces = React.useMemo(() => {
+    if (!parking) return [];
+    return Array.from({ length: parking.totalSpaces }, (_, i) => i);
+  }, [parking]);
+
+  // Hooks must always be above this! Do not return early before them.
+  if (!parking) return null;
+
+  const getTimeStr = () => {
+    if (!selectedTimeRange) return "";
+    const [start, end] = selectedTimeRange;
+    return `${start.toString().padStart(2, "0")}:00 - ${(end + 1).toString().padStart(2, "0")}:00`;
+  };
 
   const handleBooking = () => {
     if (!selectedDate || !selectedTimeRange || selectedSpace === "") return;
