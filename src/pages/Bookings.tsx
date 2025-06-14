@@ -1,9 +1,12 @@
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
-const BOOKINGS = [
+// Исходные данные для начального состояния
+const BOOKINGS_INITIAL = [
   {
     id: 1,
     status: "active",
@@ -50,12 +53,16 @@ function BookingStatus({status}: {status: string}) {
 
 function BookingCard({
   booking,
+  onCancel,
+  onProlong,
 }: {
-  booking: typeof BOOKINGS[0];
+  booking: typeof BOOKINGS_INITIAL[0];
+  onCancel?: () => void;
+  onProlong?: () => void;
 }) {
   const isActive = booking.status === "active";
   return (
-    <div className="bg-white border rounded-xl shadow-sm mb-4 p-5">
+    <div className="bg-white border rounded-xl shadow-sm mb-4 p-5 animate-fade-in">
       <div className="flex items-center mb-1 justify-between">
         <span className="font-semibold text-lg">{booking.title}</span>
         <BookingStatus status={booking.status} />
@@ -88,8 +95,8 @@ function BookingCard({
       <div className="flex gap-3 mt-4">
         {isActive && (
           <>
-            <Button variant="destructive" className="flex-1">Отменить</Button>
-            <Button variant="secondary" className="flex-1">Продлить</Button>
+            <Button variant="destructive" className="flex-1" onClick={onCancel}>Отменить</Button>
+            <Button variant="secondary" className="flex-1" onClick={onProlong}>Продлить</Button>
           </>
         )}
       </div>
@@ -97,14 +104,45 @@ function BookingCard({
   );
 }
 
-const Bookings = () => (
-  <div className="max-w-md mx-auto py-8 px-2">
-    <h1 className="text-3xl font-bold mb-1">Мои бронирования</h1>
-    <div className="text-gray-500 text-base mb-6">История и активные бронирования</div>
-    {BOOKINGS.map((b) => (
-      <BookingCard key={b.id} booking={b} />
-    ))}
-  </div>
-);
+const Bookings = () => {
+  const [bookings, setBookings] = useState(BOOKINGS_INITIAL);
+  const { toast } = useToast();
+
+  const handleCancel = (id: number) => {
+    setBookings((prev) => prev.filter((b) => b.id !== id));
+    toast({
+      title: "Бронирование отменено",
+      description: "Вы отменили бронирование.",
+      variant: "destructive"
+    });
+  };
+
+  const handleProlong = (booking: typeof BOOKINGS_INITIAL[0]) => {
+    toast({
+      title: "Продление успешно",
+      description: `Бронирование “${booking.title}” продлено на 2 часа.`,
+      variant: "default"
+    });
+    // Здесь можно добавить логику изменения даты/времени, если нужно.
+  };
+
+  return (
+    <div className="max-w-md mx-auto py-8 px-2">
+      <h1 className="text-3xl font-bold mb-1">Мои бронирования</h1>
+      <div className="text-gray-500 text-base mb-6">История и активные бронирования</div>
+      {bookings.length === 0 && (
+        <div className="text-sm text-muted-foreground text-center mt-32">Нет активных или прошедших бронирований</div>
+      )}
+      {bookings.map((b) => (
+        <BookingCard
+          key={b.id}
+          booking={b}
+          onCancel={b.status === "active" ? () => handleCancel(b.id) : undefined}
+          onProlong={b.status === "active" ? () => handleProlong(b) : undefined}
+        />
+      ))}
+    </div>
+  );
+};
 
 export default Bookings;
