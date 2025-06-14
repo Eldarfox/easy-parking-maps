@@ -1,5 +1,5 @@
 
-import GoogleParkingMap from "@/components/GoogleParkingMap";
+import ParkingMap from "@/components/ParkingMap";
 import BottomBar from "@/components/BottomBar";
 
 const Index = () => {
@@ -15,7 +15,7 @@ const Index = () => {
           </div>
         </header>
         <main className="flex-1 w-full overflow-hidden relative">
-          <GoogleParkingMap />
+          <ParkingMap />
         </main>
       </div>
       <BottomBar />
