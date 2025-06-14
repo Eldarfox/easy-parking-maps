@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -92,7 +91,7 @@ function BookingCard({
 }
 
 const Bookings = () => {
-  const [bookings, setBookings] = useState<typeof initialLoad[]>([]);
+  const [bookings, setBookings] = useState<any[]>([]);
   const { toast } = useToast();
 
   // Функция получения массива броней из localStorage
@@ -106,10 +105,8 @@ const Bookings = () => {
     }
   }
 
-  // Подгрузка из localStorage при первом рендере
   useEffect(() => {
     setBookings(initialLoad());
-    // Подписка на внешние обновления ("браузерные" табы)
     const onStorage = (e: StorageEvent) => {
       if (e.key === BOOKINGS_LS_KEY) {
         setBookings(initialLoad());
@@ -138,7 +135,6 @@ const Bookings = () => {
       description: `Бронирование “${booking.title}” продлено на 2 часа.`,
       variant: "default"
     });
-    // Тут можно обновить дату/время, если нужно.
   };
 
   return (

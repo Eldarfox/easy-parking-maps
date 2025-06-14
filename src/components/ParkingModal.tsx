@@ -59,26 +59,22 @@ const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
   const { toast } = useToast();
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  // НОВОЕ: значение — [начало, конец] (часы)
+  // Теперь null либо [start, end]
   const [selectedTimeRange, setSelectedTimeRange] = useState<[number, number] | null>(null);
-  // Список занятых часов для выбранной даты
   const [disabledHours, setDisabledHours] = useState<number[]>([]);
 
   React.useEffect(() => {
-    // Сброс выбора при открытии модалки/смене паркинга
     if (open) {
       setSelectedDate(undefined);
       setSelectedTimeRange(null);
     }
   }, [open, parking]);
 
-  // Демонстрация занятых часов. В реальном случае данные должны приходить из API/БД.
   React.useEffect(() => {
     if (!selectedDate) {
       setDisabledHours([]);
       return;
     }
-    // Пример: считаем что 17:00 и 18:00 заняты
     setDisabledHours([17, 18]);
   }, [selectedDate]);
 
@@ -94,7 +90,6 @@ const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
       if (!Array.isArray(arr)) arr = [];
     } catch { arr = []; }
 
-    // Формируем отображение выбранного времени
     const [start, end] = selectedTimeRange;
     const timeStr = `${start.toString().padStart(2,"0")}:00 - ${(end+1).toString().padStart(2,"0")}:00`;
 
