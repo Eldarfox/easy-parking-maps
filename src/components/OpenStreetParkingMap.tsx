@@ -24,8 +24,12 @@ type MarkerPopupProps = {
   onClick: (p: Parking) => void;
 };
 
+// Always render a valid React element, even if parking is not valid
 const MarkerPopup: React.FC<MarkerPopupProps> = ({ parking, onClick }) => {
-  if (!parking) return <></>; // Всегда что-то возвращаем!
+  if (!parking) {
+    console.warn("Tried to render MarkerPopup with falsy parking:", parking);
+    return null;
+  }
   return (
     <Marker
       position={[parking.lat, parking.lng]}
@@ -61,8 +65,21 @@ const OpenStreetParkingMap: React.FC = () => {
     }, 400);
   }, []);
 
-  // Defensive: всегда массив, фильтруем valids!
-  const parkings: Parking[] = (Array.isArray(mockParkings) ? mockParkings : []).filter(Boolean);
+  // Strictly filter only valid Parking objects!
+  const parkings: Parking[] = Array.isArray(mockParkings)
+    ? mockParkings.filter(
+        (p): p is Parking =>
+          !!p &&
+          typeof p.id === "string" &&
+          typeof p.lat === "number" &&
+          typeof p.lng === "number"
+      )
+    : [];
+
+  // Debug output to verify correctness:
+  useEffect(() => {
+    console.log("Filtered parkings used for map:", parkings);
+  }, [parkings]);
 
   return (
     <div
@@ -85,16 +102,18 @@ const OpenStreetParkingMap: React.FC = () => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {parkings.length > 0 &&
-          parkings.map((p) => (
-            <MarkerPopup
-              key={p.id}
-              parking={p}
-              onClick={(parking) => {
-                setSelectedParking(parking);
-                setModalOpen(true);
-              }}
-            />
-          ))}
+          parkings.map((p) =>
+            p ? (
+              <MarkerPopup
+                key={p.id}
+                parking={p}
+                onClick={(parking) => {
+                  setSelectedParking(parking);
+                  setModalOpen(true);
+                }}
+              />
+            ) : null
+          )}
       </MapContainer>
       <ParkingModal
         open={modalOpen}
@@ -106,3 +125,4 @@ const OpenStreetParkingMap: React.FC = () => {
 };
 
 export default OpenStreetParkingMap;
+
