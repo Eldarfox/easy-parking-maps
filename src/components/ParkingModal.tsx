@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Parking } from "@/data/parkings";
@@ -9,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { format } from "date-fns";
 import ruLocale from "date-fns/locale/ru";
+import ClockTimeSelector from "./ClockTimeSelector";
 
 const BOOKINGS_LS_KEY = "bookings_list_lovable";
 
@@ -58,24 +58,35 @@ function mapParkingToBooking(parking: Parking, date: Date, time: string) {
 const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
   const { toast } = useToast();
 
-  // состояния для даты и времени
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [selectedTime, setSelectedTime] = useState<string>("");
+  // НОВОЕ: значение — [начало, конец] (часы)
+  const [selectedTimeRange, setSelectedTimeRange] = useState<[number, number] | null>(null);
+  // Список занятых часов для выбранной даты
+  const [disabledHours, setDisabledHours] = useState<number[]>([]);
 
   React.useEffect(() => {
-    // Сброс даты/времени при открытии другого паркинга/модалки
+    // Сброс выбора при открытии модалки/смене паркинга
     if (open) {
       setSelectedDate(undefined);
-      setSelectedTime("");
+      setSelectedTimeRange(null);
     }
   }, [open, parking]);
+
+  // Демонстрация занятых часов. В реальном случае данные должны приходить из API/БД.
+  React.useEffect(() => {
+    if (!selectedDate) {
+      setDisabledHours([]);
+      return;
+    }
+    // Пример: считаем что 17:00 и 18:00 заняты
+    setDisabledHours([17, 18]);
+  }, [selectedDate]);
 
   if (!parking) return null;
 
   const handleBooking = () => {
-    if (!selectedDate || !selectedTime) return;
+    if (!selectedDate || !selectedTimeRange) return;
 
-    // 1. Считываем текущие брони
     const arrRaw = localStorage.getItem(BOOKINGS_LS_KEY);
     let arr = [];
     try {
@@ -83,21 +94,24 @@ const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
       if (!Array.isArray(arr)) arr = [];
     } catch { arr = []; }
 
-    // 2. Создаем новую запись с выбранной датой и временем
-    const booking = mapParkingToBooking(parking, selectedDate, selectedTime);
+    // Формируем отображение выбранного времени
+    const [start, end] = selectedTimeRange;
+    const timeStr = `${start.toString().padStart(2,"0")}:00 - ${(end+1).toString().padStart(2,"0")}:00`;
 
-    // 3. Пушим, сохраняем
-    arr.unshift(booking); // новые сверху
+    const booking = {
+      ...mapParkingToBooking(parking, selectedDate, timeStr),
+      time: timeStr,
+    };
+
+    arr.unshift(booking);
     localStorage.setItem(BOOKINGS_LS_KEY, JSON.stringify(arr));
 
-    // 4. Показываем тост
     toast({
       title: "Бронирование успешно!",
       description: `Парковка "${parking.name}" на ${booking.date} в ${booking.time} успешно забронирована.`,
       variant: "default",
     });
 
-    // 5. Закрываем модал
     onClose();
   };
 
@@ -140,28 +154,23 @@ const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
                 locale={ruLocale}
               />
             </div>
-            {/* Выбор времени */}
+            {/* Выбор времени — часы */}
             <div className="flex-1">
               <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
                 <ClockIcon className="w-4 h-4" />
-                Время
+                Время (часы)
               </div>
-              <Select value={selectedTime} onValueChange={setSelectedTime}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Выберите время" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIME_OPTIONS.map((option) => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ClockTimeSelector
+                value={selectedTimeRange}
+                onChange={setSelectedTimeRange}
+                disabledHours={disabledHours}
+              />
             </div>
           </div>
           <Button
             className="w-full font-bold"
             onClick={handleBooking}
-            disabled={!selectedDate || !selectedTime}
+            disabled={!selectedDate || !selectedTimeRange}
           >
             Забронировать
           </Button>
