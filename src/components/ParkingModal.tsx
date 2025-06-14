@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Parking } from "@/data/parkings";
@@ -8,7 +7,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { format } from "date-fns";
-import ruLocale from "date-fns/locale/ru/index.js";
+import { ru } from "date-fns/locale";
 import ClockTimeSelector from "./ClockTimeSelector";
 
 const BOOKINGS_LS_KEY = "bookings_list_lovable";
@@ -147,7 +146,7 @@ const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
                 onSelect={setSelectedDate}
                 fromDate={new Date()}
                 className="p-3 pointer-events-auto border rounded-md"
-                locale={ruLocale}
+                locale={ru}
               />
             </div>
             {/* Выбор времени — часы */}
