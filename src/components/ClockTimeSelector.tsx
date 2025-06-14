@@ -51,18 +51,21 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
     const [start, end] = selection;
 
     if (start === null || (start !== null && end !== null)) {
+      // Первый клик — установить начало
       setSelection([hour, null]);
       onChange(null);
     } else if (start !== null && end === null) {
-      // Только если кликнутый час больше старта и внутри нет disabled
-      if (hour > start) {
-        const inRange = HOURS.filter(h => h > start && h <= hour);
-        const anyDisabled = inRange.some(h => isDisabled(h, disabledHours));
-        if (anyDisabled) return;
-        setSelection([start, hour]);
-        onChange([start, hour]);
-      }
-      // Не даём выбрать назад — ничего не делаем
+      // Второй клик — установить конец
+      const newStart = Math.min(start, hour);
+      const newEnd = Math.max(start, hour);
+
+      // Проверка: нет ли disabled часов между ними
+      const inRange = HOURS.filter(h => h > newStart && h <= newEnd);
+      const anyDisabled = inRange.some(h => isDisabled(h, disabledHours));
+      if (anyDisabled) return;
+
+      setSelection([newStart, newEnd]);
+      onChange([newStart, newEnd]);
     }
   }
 
