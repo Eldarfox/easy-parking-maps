@@ -1,4 +1,3 @@
-
 import React from "react";
 
 type ClockTimeSelectorProps = {
@@ -45,34 +44,28 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
     };
   }
 
-  // Клик по времени — логика выбора диапазона только по часовой стрелке
+  // Клик по времени: первый клик — start, второй клик — end (clockwise only)
   function selectHour(hour: number) {
     if (isDisabled(hour, disabledHours)) return;
+
     const [start, end] = selection;
 
     if (start === null || (start !== null && end !== null)) {
-      // Первое нажатие или пере-выбор — устанавливаем начало
+      // Первое нажатие или полный сброс — начинаем с первого часа
       setSelection([hour, null]);
-      onChange(null); // Сброс выделения наружу
+      onChange(null);
     } else if (start !== null && end === null) {
-      if (hour === start) {
-        // Клик по тому же часу — снимаем выделение
-        setSelection([null, null]);
-        onChange(null);
-      } else if (hour > start) {
-        // Только если второй час больше первого — clockwise
-        // Проверяем нет ли disabled часов внутри диапазона
+      // Второй клик
+      if (hour > start) {
+        // Проверяем, нет ли disabled-часов внутри выбранного диапазона (экскл. start, инкл. hour)
         const disabledInRange = HOURS.some(
           (h) => h > start && h <= hour && isDisabled(h, disabledHours)
         );
         if (disabledInRange) return;
         setSelection([start, hour]);
         onChange([start, hour]);
-      } else {
-        // Если второй час меньше — сброс
-        setSelection([null, null]);
-        onChange(null);
       }
+      // Если hour <= start — игнорируем (не меняем selection)
     }
   }
 
