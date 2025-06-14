@@ -1,9 +1,14 @@
 
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Wallet } from "lucide-react";
+import { Wallet, Map } from "lucide-react";
 
 const hotbarButtons = [
+  {
+    label: "Карта",
+    icon: Map,
+    route: "/",
+  },
   {
     label: "Кабинет",
     icon: Wallet,
