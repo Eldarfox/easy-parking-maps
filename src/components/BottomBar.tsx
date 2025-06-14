@@ -1,21 +1,21 @@
 
 import React from "react";
-import { wallet } from "lucide-react";
+import { Wallet } from "lucide-react";
 
 const hotbarButtons = [
   {
     label: "Кабинет",
-    icon: wallet,
+    icon: Wallet,
     onClick: () => console.log("Переход в кабинет"),
   },
   {
     label: "Тарифы",
-    icon: wallet,
+    icon: Wallet,
     onClick: () => console.log("Переход к тарифам"),
   },
   {
     label: "Кошелек",
-    icon: wallet,
+    icon: Wallet,
     onClick: () => console.log("Переход в кошелек"),
   }
 ];
@@ -49,3 +49,4 @@ const BottomBar: React.FC = () => {
 };
 
 export default BottomBar;
+
