@@ -35,6 +35,8 @@ const MapLibreParkingMap: React.FC = () => {
       el.style.border = "2px solid #fff";
       el.innerHTML =
         `<svg stroke="currentColor" fill="#fff" stroke-width="2" viewBox="0 0 24 24" class="w-6 h-6 mx-auto" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" /><path d="M7 12h10M12 7v10" /></svg>`;
+      // Основная доработка: z-индекс
+      el.style.zIndex = "99";
 
       el.onmouseenter = () => (el.style.background = "#2563eb");
       el.onmouseleave = () => (el.style.background = "#3b82f6");

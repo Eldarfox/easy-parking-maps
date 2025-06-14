@@ -5,45 +5,58 @@ export interface Parking {
   address: string;
   lat: number;
   lng: number;
-  prices: { type: string; price: number; currency: string; }[];
+  prices: { type: string; price: number; currency: string }[];
   distance: number; // в метрах
 }
 
+// Используем ваши координаты и имена, добавляем заглушки для address, prices, distance.
 export const mockParkings: Parking[] = [
   {
-    id: 'p1',
-    name: 'Паркинг у ТЦ Европа',
-    address: 'ул. Гагарина, 1',
-    lat: 55.751244,
-    lng: 37.618423,
+    id: "1",
+    name: "Крытая парковка Дордой Плаза",
+    address: "Дордой Плаза, Бишкек",
+    lat: 42.878633,
+    lng: 74.617215,
     prices: [
-      { type: '1 час', price: 120, currency: '₽' },
-      { type: 'Весь день', price: 800, currency: '₽' },
+      { type: "1 час", price: 70, currency: "сом" },
+      { type: "Весь день", price: 350, currency: "сом" },
     ],
-    distance: 150,
+    distance: 200,
   },
   {
-    id: 'p2',
-    name: 'Паркинг у Офиса Сити',
-    address: 'пр. Ленина, 12Б',
-    lat: 55.753933,
-    lng: 37.620795,
+    id: "2",
+    name: "Крытая парковка ГУМ",
+    address: "ГУМ, Бишкек",
+    lat: 42.875413,
+    lng: 74.615353,
     prices: [
-      { type: '1 час', price: 90, currency: '₽' },
-      { type: 'Весь день', price: 650, currency: '₽' },
+      { type: "1 час", price: 80, currency: "сом" },
+      { type: "Весь день", price: 400, currency: "сом" },
     ],
-    distance: 350,
+    distance: 400,
   },
   {
-    id: 'p3',
-    name: 'Крытая парковка Plaza',
-    address: 'ул. Мясницкая, 35',
-    lat: 55.757867,
-    lng: 37.634974,
+    id: "3",
+    name: "Парковка ЦУМ (центр города)",
+    address: "ЦУМ, Бишкек",
+    lat: 42.87591,
+    lng: 74.612875,
     prices: [
-      { type: '1 час', price: 150, currency: '₽' },
-      { type: 'Весь день', price: 950, currency: '₽' },
+      { type: "1 час", price: 60, currency: "сом" },
+      { type: "Весь день", price: 280, currency: "сом" },
     ],
-    distance: 420,
+    distance: 500,
+  },
+  {
+    id: "4",
+    name: "Подземная парковка Асанбай Центр",
+    address: "Асанбай Центр, Бишкек",
+    lat: 42.822968,
+    lng: 74.585654,
+    prices: [
+      { type: "1 час", price: 90, currency: "сом" },
+      { type: "Весь день", price: 450, currency: "сом" },
+    ],
+    distance: 1800,
   },
 ];
