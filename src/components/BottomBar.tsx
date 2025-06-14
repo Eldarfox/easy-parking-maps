@@ -1,13 +1,18 @@
 
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Wallet, Map } from "lucide-react";
+import { Wallet, Map, Calendar } from "lucide-react";
 
 const hotbarButtons = [
   {
     label: "Карта",
     icon: Map,
     route: "/",
+  },
+  {
+    label: "Брони",
+    icon: Calendar,
+    route: "/bookings",
   },
   {
     label: "Кабинет",
@@ -60,3 +65,4 @@ const BottomBar: React.FC = () => {
 };
 
 export default BottomBar;
+
