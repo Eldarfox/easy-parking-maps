@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Parking } from "@/data/parkings";
@@ -7,7 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { format } from "date-fns";
-import ruLocale from "date-fns/locale/ru";
+import ruLocale from "date-fns/locale/ru/index.js";
 import ClockTimeSelector from "./ClockTimeSelector";
 
 const BOOKINGS_LS_KEY = "bookings_list_lovable";
@@ -91,7 +92,7 @@ const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
     } catch { arr = []; }
 
     const [start, end] = selectedTimeRange;
-    const timeStr = `${start.toString().padStart(2,"0")}:00 - ${(end+1).toString().padStart(2,"0")}:00`;
+    const timeStr = `${start.toString().padStart(2,"0")}:00 - ${(end + 1).toString().padStart(2,"0")}:00`;
 
     const booking = {
       ...mapParkingToBooking(parking, selectedDate, timeStr),

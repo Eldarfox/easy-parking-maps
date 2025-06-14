@@ -1,3 +1,4 @@
+
 import React from "react";
 
 type ClockTimeSelectorProps = {
@@ -17,7 +18,7 @@ function isDisabled(hour: number, disabledHours?: number[]) {
   return disabledHours?.includes(hour);
 }
 
-const getLabel = (h: number) => h.toString().padStart(2, "0") + ":00";
+const getLabel = (h: number) => h.toString().padStart(2, "0"); // Только часы
 
 const arrowColor = "#2563eb";
 const arrowWidth = 3;
@@ -44,29 +45,33 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
     };
   }
 
-  // Клик по часу: логика выбора диапазона
+  // Клик по времени — логика выбора диапазона только по часовой стрелке
   function selectHour(hour: number) {
     if (isDisabled(hour, disabledHours)) return;
     const [start, end] = selection;
+
     if (start === null || (start !== null && end !== null)) {
       // Первое нажатие или пере-выбор — устанавливаем начало
       setSelection([hour, null]);
-      onChange(null); // Сброс выделения
+      onChange(null); // Сброс выделения наружу
     } else if (start !== null && end === null) {
       if (hour === start) {
         // Клик по тому же часу — снимаем выделение
         setSelection([null, null]);
         onChange(null);
-      } else {
-        // Выбор диапазона: проверяем, что нет "запрещённых" часов внутри
-        const min = Math.min(start, hour);
-        const max = Math.max(start, hour);
+      } else if (hour > start) {
+        // Только если второй час больше первого — clockwise
+        // Проверяем нет ли disabled часов внутри диапазона
         const disabledInRange = HOURS.some(
-          (h) => h >= min && h <= max && isDisabled(h, disabledHours)
+          (h) => h > start && h <= hour && isDisabled(h, disabledHours)
         );
         if (disabledInRange) return;
-        setSelection([min, max]);
-        onChange([min, max]);
+        setSelection([start, hour]);
+        onChange([start, hour]);
+      } else {
+        // Если второй час меньше — сброс
+        setSelection([null, null]);
+        onChange(null);
       }
     }
   }
@@ -83,7 +88,7 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
         {/* Основа круга */}
         <circle cx={CENTER} cy={CENTER} r={RADIUS} fill="#f1f5f9" />
         {/* Серые секторы для занятых часов */}
-        {HOURS.map((h, idx) =>
+        {HOURS.map((h) =>
           isDisabled(h, disabledHours) ? (
             <path
               key={`sect-${h}`}
@@ -99,26 +104,27 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
           ) : null
         )}
         {/* Секторы выбранного интервала */}
-        {selection[0] !== null && selection[1] !== null && (
+        {selection[0] !== null && selection[1] !== null && selection[1]! > selection[0]! && (
           <path
             d={describeArc(
               CENTER,
               CENTER,
               RADIUS,
-              hourToDeg(selection[0]),
-              hourToDeg(selection[1] + 1)
+              hourToDeg(selection[0]!),
+              hourToDeg(selection[1]! + 1)
             )}
             fill="rgba(59,130,246,0.18)"
           />
         )}
         {/* Часовые отметки и кликабельные зоны */}
-        {HOURS.map((h, idx) => {
+        {HOURS.map((h) => {
           const { x, y } = getHandlePos(h);
           const selected =
             selection[0] !== null &&
             selection[1] !== null &&
-            h >= selection[0] &&
-            h <= selection[1];
+            h >= selection[0]! &&
+            h <= selection[1]! &&
+            selection[1]! > selection[0]!;
           return (
             <g key={h}>
               <circle
@@ -140,7 +146,7 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
               <text
                 x={x}
                 y={y + 5}
-                fontSize={12}
+                fontSize={15}
                 textAnchor="middle"
                 fill={isDisabled(h, disabledHours) ? "#6b7280" : "#0f172a"}
                 style={{ userSelect: "none", pointerEvents: "none" }}
@@ -159,10 +165,10 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
         })}
       </svg>
       <div className="mt-2 text-sm">
-        {selection[0] !== null && selection[1] !== null
-          ? `${getLabel(selection[0])} - ${getLabel(selection[1] + 1)}`
+        {selection[0] !== null && selection[1] !== null && selection[1]! > selection[0]!
+          ? `${getLabel(selection[0]!)} - ${getLabel(selection[1]! + 1)}`
           : selection[0] !== null
-          ? `Начало: ${getLabel(selection[0])}` 
+          ? `Начало: ${getLabel(selection[0]!)}`
           : "Выберите время"}
       </div>
     </div>
