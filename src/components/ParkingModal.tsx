@@ -1,11 +1,28 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Parking } from "@/data/parkings";
-import { CircleParking } from "lucide-react";
+import { CircleParking, Calendar as CalendarIcon, Clock as ClockIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { format } from "date-fns";
+import ruLocale from "date-fns/locale/ru";
 
 const BOOKINGS_LS_KEY = "bookings_list_lovable";
+
+// Варианты времени для бронирования (например, с 08:00 до 23:00, шаг 1 час)
+const TIME_OPTIONS = [
+  "08:00 - 10:00",
+  "10:00 - 12:00",
+  "12:00 - 14:00",
+  "14:00 - 16:00",
+  "16:00 - 18:00",
+  "18:00 - 20:00",
+  "20:00 - 22:00",
+  "22:00 - 23:00",
+];
 
 type Props = {
   open: boolean;
@@ -24,14 +41,14 @@ function getNextBookingId() {
 }
 
 // Генерируем бронирование для Bookings
-function mapParkingToBooking(parking: Parking) {
+function mapParkingToBooking(parking: Parking, date: Date, time: string) {
   return {
     id: getNextBookingId(),
     status: "active",
     title: parking.name,
     address: parking.address,
-    date: new Date().toLocaleDateString("ru-RU"),
-    time: "09:00 - 21:00",
+    date: format(date, "dd.MM.yyyy"),
+    time,
     // Для demo: транспонируем parking.id в букву + номер
     place: "A-" + parking.id,
     price: (parking.prices[0]?.price || 0),
@@ -41,9 +58,23 @@ function mapParkingToBooking(parking: Parking) {
 const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
   const { toast } = useToast();
 
+  // состояния для даты и времени
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedTime, setSelectedTime] = useState<string>("");
+
+  React.useEffect(() => {
+    // Сброс даты/времени при открытии другого паркинга/модалки
+    if (open) {
+      setSelectedDate(undefined);
+      setSelectedTime("");
+    }
+  }, [open, parking]);
+
   if (!parking) return null;
 
   const handleBooking = () => {
+    if (!selectedDate || !selectedTime) return;
+
     // 1. Считываем текущие брони
     const arrRaw = localStorage.getItem(BOOKINGS_LS_KEY);
     let arr = [];
@@ -52,8 +83,8 @@ const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
       if (!Array.isArray(arr)) arr = [];
     } catch { arr = []; }
 
-    // 2. Создаем новую запись
-    const booking = mapParkingToBooking(parking);
+    // 2. Создаем новую запись с выбранной датой и временем
+    const booking = mapParkingToBooking(parking, selectedDate, selectedTime);
 
     // 3. Пушим, сохраняем
     arr.unshift(booking); // новые сверху
@@ -62,7 +93,7 @@ const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
     // 4. Показываем тост
     toast({
       title: "Бронирование успешно!",
-      description: `Парковка "${parking.name}" успешно забронирована.`,
+      description: `Парковка "${parking.name}" на ${booking.date} в ${booking.time} успешно забронирована.`,
       variant: "default",
     });
 
@@ -93,12 +124,47 @@ const ParkingModal: React.FC<Props> = ({ open, onClose, parking }) => {
               ))}
             </div>
           </div>
-          <button
-            className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded transition"
+          <div className="mb-4 flex gap-4 max-sm:flex-col">
+            {/* Выбор даты */}
+            <div className="flex-1">
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+                <CalendarIcon className="w-4 h-4" />
+                Дата
+              </div>
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                fromDate={new Date()}
+                className="p-3 pointer-events-auto border rounded-md"
+                locale={ruLocale}
+              />
+            </div>
+            {/* Выбор времени */}
+            <div className="flex-1">
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+                <ClockIcon className="w-4 h-4" />
+                Время
+              </div>
+              <Select value={selectedTime} onValueChange={setSelectedTime}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Выберите время" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIME_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <Button
+            className="w-full font-bold"
             onClick={handleBooking}
+            disabled={!selectedDate || !selectedTime}
           >
             Забронировать
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
