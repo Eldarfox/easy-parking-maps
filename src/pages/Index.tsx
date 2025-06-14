@@ -1,4 +1,5 @@
-import ParkingMap from "@/components/ParkingMap";
+
+import OpenStreetParkingMap from "@/components/OpenStreetParkingMap";
 import BottomBar from "@/components/BottomBar";
 
 const Index = () => {
@@ -14,7 +15,7 @@ const Index = () => {
           </div>
         </header>
         <main className="flex-1 w-full overflow-hidden relative">
-          <ParkingMap />
+          <OpenStreetParkingMap />
         </main>
       </div>
     </div>
