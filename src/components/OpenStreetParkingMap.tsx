@@ -25,8 +25,7 @@ type MarkerPopupProps = {
 };
 
 const MarkerPopup: React.FC<MarkerPopupProps> = ({ parking, onClick }) => {
-  // Defensive: If no parking, render null (but shouldn't happen)
-  if (!parking) return null;
+  if (!parking) return <></>; // Всегда что-то возвращаем!
   return (
     <Marker
       position={[parking.lat, parking.lng]}
@@ -37,9 +36,7 @@ const MarkerPopup: React.FC<MarkerPopupProps> = ({ parking, onClick }) => {
     >
       <Popup>
         <div className="text-base font-bold mb-1">{parking.name}</div>
-        <div className="text-sm text-muted-foreground mb-2">
-          {parking.address}
-        </div>
+        <div className="text-sm text-muted-foreground mb-2">{parking.address}</div>
         <button
           className="mt-1 w-full rounded bg-blue-500 text-white px-3 py-1 hover:bg-blue-700 transition font-semibold"
           onClick={() => onClick(parking)}
@@ -64,8 +61,8 @@ const OpenStreetParkingMap: React.FC = () => {
     }, 400);
   }, []);
 
-  // Defensive: always ensure parkings is an array
-  const parkings: Parking[] = Array.isArray(mockParkings) ? mockParkings : [];
+  // Defensive: всегда массив, фильтруем valids!
+  const parkings: Parking[] = (Array.isArray(mockParkings) ? mockParkings : []).filter(Boolean);
 
   return (
     <div
@@ -87,8 +84,8 @@ const OpenStreetParkingMap: React.FC = () => {
           attribution='© <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {parkings.map((p) =>
-          p ? (
+        {parkings.length > 0 &&
+          parkings.map((p) => (
             <MarkerPopup
               key={p.id}
               parking={p}
@@ -97,8 +94,7 @@ const OpenStreetParkingMap: React.FC = () => {
                 setModalOpen(true);
               }}
             />
-          ) : null
-        )}
+          ))}
       </MapContainer>
       <ParkingModal
         open={modalOpen}
@@ -110,4 +106,3 @@ const OpenStreetParkingMap: React.FC = () => {
 };
 
 export default OpenStreetParkingMap;
-
