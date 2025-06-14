@@ -4,8 +4,10 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { mockParkings, Parking } from "@/data/parkings";
 import ParkingModal from "./ParkingModal";
-import { toast } from "@/hooks/use-toast";
 import { CircleParking } from "lucide-react";
+
+// ВСТАВЬТЕ СЮДА ВАШ ПУБЛИЧНЫЙ MAPBOX TOKEN
+const MAPBOX_PUBLIC_TOKEN = "pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndjM3bWpoN3gifQ._V8QWxY06K1I1sZI1y8vfg"; // Пример: стандартный публичный токен demotoken
 
 const mapInitial = {
   lng: 37.62,
@@ -18,24 +20,13 @@ type MapboxMap = mapboxgl.Map;
 const ParkingMap = () => {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const map = useRef<MapboxMap | null>(null);
-  const [token, setToken] = useState<string>("");
-  const [showTokenField, setShowTokenField] = useState(true);
   const [selectedParking, setSelectedParking] = useState<Parking | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Спрятать поле после ввода
-  function handleStart() {
-    if (token.length < 20) {
-      toast({ title: "Введите корректный Mapbox token", variant: "destructive" });
-      return;
-    }
-    setShowTokenField(false);
-  }
-
   useEffect(() => {
-    if (!mapContainer.current || !token || showTokenField) return;
+    if (!mapContainer.current) return;
 
-    mapboxgl.accessToken = token;
+    mapboxgl.accessToken = MAPBOX_PUBLIC_TOKEN;
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
@@ -93,34 +84,11 @@ const ParkingMap = () => {
     return () => {
       map.current?.remove();
     };
-  }, [token, showTokenField]);
+  }, []);
 
   return (
     <div className="w-full h-[calc(100vh-32px)] relative flex justify-center items-start bg-card shadow-lg rounded-xl overflow-hidden">
-      {/* Mapbox token input */}
-      {showTokenField && (
-        <div className="absolute top-8 left-1/2 -translate-x-1/2 z-50 max-w-md w-full bg-white border p-6 rounded-xl shadow-lg flex flex-col items-center gap-2">
-          <CircleParking className="w-8 h-8 text-blue-600 mb-1" />
-          <div className="text-lg font-semibold mb-2">Введите Mapbox Public Token</div>
-          <input
-            className="w-full border px-3 py-2 rounded text-sm focus:outline-none focus:border-blue-400"
-            placeholder="pk.eyJ1..."
-            value={token}
-            onChange={e => setToken(e.target.value.trim())}
-            autoFocus
-          />
-          <div className="text-xs text-muted-foreground mb-2">
-            Получите бесплатный token на <a href="https://mapbox.com/account/access-tokens/" className="text-blue-500 underline" target="_blank">mapbox.com</a>
-          </div>
-          <button
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition"
-            onClick={handleStart}
-          >
-            Показать карту
-          </button>
-        </div>
-      )}
-
+      {/* Больше нет поля для токена! */}
       <div ref={mapContainer} className="absolute inset-0 w-full h-full rounded-xl z-10" />
 
       {/* Модальное окно парковки */}
