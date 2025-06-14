@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Parking } from "@/data/parkings";
@@ -59,7 +60,6 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedTimeRange, setSelectedTimeRange] = useState<[number, number] | null>(null);
-  const [disabledHours, setDisabledHours] = useState<number[]>([]);
   const [selectedSpace, setSelectedSpace] = useState<string>("");
   const [allBookings, setAllBookings] = React.useState<BookingItem[]>([]);
 
@@ -77,15 +77,40 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
     }
   }, [open, parking]);
 
-  React.useEffect(() => {
-    if (!selectedDate) {
-      setDisabledHours([]);
-      return;
-    }
-    setDisabledHours([17, 18]);
-  }, [selectedDate]);
+  // Вычисляем массив занятых часов для выбранного места (spaceNum), даты
+  const disabledHours = React.useMemo(() => {
+    if (!parking || !selectedDate || !selectedSpace) return [];
+    const selectedSpaceNum = parseInt(selectedSpace, 10);
+    const thisDate = format(selectedDate, "dd.MM.yyyy");
 
-  // Use React.useMemo, but always, regardless of parking
+    // Фильтруем бронирования только по нужной парковке, дате, месту
+    const busyRanges: [number, number][] = allBookings
+      .filter(
+        (b) =>
+          b.parkingId === parking.id &&
+          b.date === thisDate &&
+          b.spaceNum === selectedSpaceNum
+      )
+      .map((b) => {
+        const [start, end] = b.time
+          .split(" - ")
+          .map((t) => parseInt(t.split(":")[0], 10));
+        // end хранит последний час ИЗ booking (например 13:00 - 15:00, end=15)
+        // нужно сделать диапазон [start,end-1] включительно
+        return [start, end - 1] as [number, number];
+      });
+
+    // Собираем все отдельные часы из всех занятых диапазонов
+    const disabled: number[] = [];
+    busyRanges.forEach(([from, to]) => {
+      for (let h = from; h <= to; h++) {
+        disabled.push(h);
+      }
+    });
+    // Оставляем только уникальные
+    return Array.from(new Set(disabled));
+  }, [allBookings, parking, selectedDate, selectedSpace]);
+
   const unavailableSpaces = React.useMemo(() => {
     if (!parking || !selectedDate || !selectedTimeRange) return [];
     const thisDate = format(selectedDate, "dd.MM.yyyy");
@@ -107,13 +132,12 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
       .map((b) => b.spaceNum);
   }, [allBookings, parking, selectedDate, selectedTimeRange]);
 
-  // Generate spaces, or empty if no parking is selected
   const allSpaces = React.useMemo(() => {
     if (!parking) return [];
     return Array.from({ length: parking.totalSpaces }, (_, i) => i);
   }, [parking]);
 
-  // Hooks must always be above this! Do not return early before them.
+  // Hooks должны идти до этого возврата!
   if (!parking) return null;
 
   const getTimeStr = () => {
@@ -212,7 +236,7 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
               <CircleParking className="w-4 h-4" />
               Место парковки
             </div>
-            <Select value={selectedSpace} onValueChange={setSelectedSpace} disabled={!selectedDate || !selectedTimeRange}>
+            <Select value={selectedSpace} onValueChange={(val) => { setSelectedSpace(val); setSelectedTimeRange(null); }} disabled={!selectedDate}>
               <SelectTrigger>
                 <SelectValue placeholder="Выберите место" />
               </SelectTrigger>
@@ -245,3 +269,4 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
 };
 
 export default ParkingModal;
+
