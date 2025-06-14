@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -87,10 +86,10 @@ const ParkingMap = () => {
   }, []);
 
   return (
-    <div className="w-full h-[calc(100vh-32px)] relative flex justify-center items-start bg-card shadow-lg rounded-xl overflow-hidden">
+    <div className="w-full h-[calc(100vh-64px)] relative flex justify-center items-start bg-card shadow-lg rounded-xl overflow-hidden">
       {/* Больше нет поля для токена! */}
       <div ref={mapContainer} className="absolute inset-0 w-full h-full rounded-xl z-10" />
-
+ 
       {/* Модальное окно парковки */}
       <ParkingModal
         open={modalOpen}
