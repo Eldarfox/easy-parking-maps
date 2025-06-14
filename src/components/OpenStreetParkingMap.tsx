@@ -24,10 +24,9 @@ type MarkerPopupProps = {
   onClick: (p: Parking) => void;
 };
 
-// Always render a valid React element, even if parking is not valid
 const MarkerPopup: React.FC<MarkerPopupProps> = ({ parking, onClick }) => {
   if (!parking) {
-    console.warn("Tried to render MarkerPopup with falsy parking:", parking);
+    // Defensive, should never happen
     return null;
   }
   return (
@@ -58,14 +57,13 @@ const OpenStreetParkingMap: React.FC = () => {
 
   const mapRef = useRef(null);
 
-  // Force Leaflet resize after short delay (for layout correctness)
   useEffect(() => {
     setTimeout(() => {
       window.dispatchEvent(new Event("resize"));
     }, 400);
   }, []);
 
-  // Strictly filter only valid Parking objects!
+  // filter only valid Parking objects!
   const parkings: Parking[] = Array.isArray(mockParkings)
     ? mockParkings.filter(
         (p): p is Parking =>
@@ -76,7 +74,6 @@ const OpenStreetParkingMap: React.FC = () => {
       )
     : [];
 
-  // Debug output to verify correctness:
   useEffect(() => {
     console.log("Filtered parkings used for map:", parkings);
   }, [parkings]);
@@ -101,9 +98,10 @@ const OpenStreetParkingMap: React.FC = () => {
           attribution='© <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {parkings.length > 0 &&
-          parkings.map((p) =>
-            p ? (
+        {/* Fix: parkings always rendered as one valid fragment or nothing */}
+        {parkings.length > 0 && (
+          <>
+            {parkings.map((p) => (
               <MarkerPopup
                 key={p.id}
                 parking={p}
@@ -112,8 +110,9 @@ const OpenStreetParkingMap: React.FC = () => {
                   setModalOpen(true);
                 }}
               />
-            ) : null
-          )}
+            ))}
+          </>
+        )}
       </MapContainer>
       <ParkingModal
         open={modalOpen}
