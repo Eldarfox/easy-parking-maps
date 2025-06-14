@@ -4,7 +4,7 @@ import { mockParkings, Parking } from "@/data/parkings";
 import ParkingModal from "./ParkingModal";
 
 // Вставьте сюда Ваш публичный Google Maps API KEY!
-const GOOGLE_MAPS_API_KEY = "YOUR_GOOGLE_MAPS_API_KEY";
+const GOOGLE_MAPS_API_KEY = "AIzaSyCZJouUKXbkDnhTstfABeu63Kh7WeZjxCM";
 
 const mapInitial = {
   lng: 37.62,
@@ -92,3 +92,4 @@ const GoogleParkingMap = () => {
 };
 
 export default GoogleParkingMap;
+
