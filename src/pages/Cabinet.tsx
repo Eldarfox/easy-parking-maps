@@ -2,9 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CreditCard, User, LogIn } from "lucide-react";
+import { CreditCard, User, LogIn, admin as AdminIcon } from "lucide-react";
 import ClockField from "@/components/ClockField";
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
 
 // Вспомогательная функция для проверки авторизации
 function checkAuth() {
@@ -13,10 +14,26 @@ function checkAuth() {
 
 const TIME_KEY = "cabinet_sim_time";
 
+// --------- Новый компонент AdminButton ---------
+const AdminButton = () => {
+  const navigate = useNavigate();
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      className="fixed top-4 right-4 z-50 px-3 py-2 rounded-lg shadow border border-blue-200 bg-white text-blue-700 flex gap-2 items-center hover:bg-blue-100 transition"
+      onClick={() => navigate("/admin")}
+    >
+      <AdminIcon size={18} />
+      <span className="font-semibold text-sm">Админка</span>
+    </Button>
+  );
+};
+// ------------------------------------------------
+
 const Cabinet = () => {
   const [isAuth, setIsAuth] = useState(false);
   const [name, setName] = useState("");
-  // Удаляем cardLinked
   const [simTime, setSimTime] = useState(() => {
     return (
       localStorage.getItem(TIME_KEY) ||
@@ -27,7 +44,6 @@ const Cabinet = () => {
       })
     );
   });
-  // Удаляем linkModalOpen, cardNum, cardHolder, cardExp
   const { toast } = useToast();
 
   useEffect(() => {
@@ -71,7 +87,6 @@ const Cabinet = () => {
   }
 
   function saveProfileData() {
-    // Больше не нужна проверка cardLinked
     localStorage.setItem("cabinet_name", name);
     localStorage.setItem(TIME_KEY, simTime);
   }
@@ -98,12 +113,14 @@ const Cabinet = () => {
             <User size={18} /> Зарегистрироваться
           </Button>
         </div>
+        <AdminButton />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col items-center pt-20 px-4 max-w-md mx-auto w-full">
+      <AdminButton />
       <h1 className="text-2xl font-bold mb-3 flex items-center gap-2 text-blue-700">
         <User /> Личный кабинет
       </h1>
