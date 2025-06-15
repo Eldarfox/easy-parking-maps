@@ -28,9 +28,10 @@ function getBookingStartDateTime(booking: { date: string, time: string }) {
     return new Date(NaN);
   }
 
-  const [hour, minute = 0] = (booking.time || "0:0").split(":").map(Number);
+  // ⚠️ Новый способ извлечь время начала (например: "14:00 - 18:00" → "14:00")
+  const timeStart = booking.time?.split("-")[0]?.trim() || "00:00";
+  const [hour, minute] = timeStart.split(":").map(Number);
 
-  // Проверка year, month, day
   if (
     isNaN(year) || isNaN(month) || isNaN(day) ||
     isNaN(hour) || isNaN(minute)
