@@ -20,74 +20,120 @@ function parseTimeString(str: string): Date | null {
   return now;
 }
 
+// Для хранения в localStorage
+function saveClockStateToLS(lsKey: string, baseTime: string, startedAt: number) {
+  localStorage.setItem(lsKey + "_base", baseTime);
+  localStorage.setItem(lsKey + "_startedAt", startedAt.toString());
+}
+
+function restoreClockStateFromLS(lsKey: string): { base: string | null; startedAt: number | null } {
+  const base = localStorage.getItem(lsKey + "_base");
+  const startedAt = localStorage.getItem(lsKey + "_startedAt");
+  return {
+    base,
+    startedAt: startedAt ? Number(startedAt) : null,
+  };
+}
+
 type Props = {
   value: string; // "12:34:56"
   onChange: (v: string) => void;
+  lsKey?: string; // уникальный ключ для ls (по-умолчанию "mainClock")
 };
 
-const ClockField: React.FC<Props> = ({ value, onChange }) => {
-  const [running, setRunning] = useState(true);
-  const [clock, setClock] = useState<Date>(() => {
-    const parsed = parseTimeString(value);
-    return parsed || new Date();
-  });
+const ClockField: React.FC<Props> = ({ value, onChange, lsKey = "mainClock" }) => {
+  // Стейт редактирования
   const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(toTimeStr(clock));
+  const [editValue, setEditValue] = useState(value);
 
-  const base = useRef<Date>(new Date(clock));
-  const startedAt = useRef<number>(Date.now());
+  // Таймер обновления UI (для tикания)
+  const [, forceTick] = useState(0);
 
-  // Синхронизация внутреннего значения при изменении value из пропсов
+  // Смотрим на данные в localStorage при маунте и изменении value
   useEffect(() => {
-    const parsed = parseTimeString(value);
-    if (parsed) {
-      setClock(parsed);
-      base.current = new Date(parsed);
-      startedAt.current = Date.now();
-      setEditValue(toTimeStr(parsed));
-    }
-    // eslint-disable-next-line
+    // Показывать всегда актуальное
+    setEditValue(value);
   }, [value]);
 
+  // Основная функция вычисления текущего времени (на лету!)
+  function getVirtualNow(): Date {
+    const { base, startedAt } = restoreClockStateFromLS(lsKey);
+    let show: Date;
+    if (base && startedAt) {
+      const parsed = parseTimeString(base);
+      if (parsed) {
+        const delta = Math.floor((Date.now() - startedAt) / 1000);
+        show = new Date(parsed);
+        show.setSeconds(show.getSeconds() + delta);
+        return show;
+      }
+    }
+    // Default fallbacks - на случай сбоя
+    const fallback = parseTimeString(value) || new Date();
+    return fallback;
+  }
+
+  // Для input
+  const [inputVal, setInputVal] = useState(value);
+
+  // Ставим регулярное обновление визуала только если не редактируем
   useEffect(() => {
-    if (!running) return;
+    if (isEditing) return;
     const timer = setInterval(() => {
-      const now = Date.now();
-      const delta = Math.floor((now - startedAt.current) / 1000);
-      const newDate = new Date(base.current);
-      newDate.setSeconds(newDate.getSeconds() + delta);
-      setClock(newDate);
+      forceTick(t => t + 1);
     }, 1000);
     return () => clearInterval(timer);
-  }, [running]);
+    // eslint-disable-next-line
+  }, [isEditing]);
 
-  // Кнопка (с иконкой Clock) переводит поле в режим ручного редактирования
+  // Не даём ClockField самому рассинхронизироваться с value
+  useEffect(() => {
+    setInputVal(value);
+  }, [value]);
+
+  // При старт редактирования
   const handleStartEditing = () => {
     setIsEditing(true);
-    setRunning(false);
-    setEditValue(toTimeStr(clock));
+    setEditValue(toTimeStr(getVirtualNow()));
   };
 
-  // Обработка ручного ввода
+  // Ввод вручную
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditValue(e.target.value);
   };
 
-  // Подтверждаем время, выходим из режима редактирования и снова включаем ход времени
+  // Подтвердить новое время.
   const handleManualSet = () => {
     if (/^\d{2}:\d{2}(:\d{2})?$/.test(editValue)) {
       let valueToSet = editValue.length === 5 ? editValue + ":00" : editValue;
       const parsed = parseTimeString(valueToSet);
       if (parsed) {
-        setClock(parsed);
-        base.current = new Date(parsed);
-        startedAt.current = Date.now();
-        onChange(valueToSet);
+        // Время выбранное пользователем → baseTime
+        const baseTimeStr = toTimeStr(parsed);
+        const startedAt = Date.now();
+        // Сохраняем значения, чтобы любое открытие страницы считало корректно
+        saveClockStateToLS(lsKey, baseTimeStr, startedAt);
+        // Вызываем внешний onChange (если надо)
+        onChange(baseTimeStr);
         setIsEditing(false);
-        setRunning(true);
+        setInputVal(baseTimeStr);
       }
     }
   };
+
+  // При маунте: если найдено в LS - синхронизируем
+  useEffect(() => {
+    const { base, startedAt } = restoreClockStateFromLS(lsKey);
+    if (base && startedAt) {
+      // Просто обновляем value в App через onChange
+      // (чтобы прокинулось наверх, если вдруг LS сбросился)
+      onChange(base);
+    }
+    // eslint-disable-next-line
+  }, []);
+
+  // Показываем визуал: если не редактируем - вычисляем виртуальное 'текущее время', иначе показываем editValue
+  const display = isEditing ? editValue : toTimeStr(getVirtualNow());
 
   return (
     <div className="flex items-center gap-2">
@@ -108,7 +154,7 @@ const ClockField: React.FC<Props> = ({ value, onChange }) => {
         type="text"
         pattern="\d{2}:\d{2}(:\d{2})?"
         maxLength={8}
-        value={isEditing ? editValue : toTimeStr(clock)}
+        value={display}
         onChange={handleInputChange}
         className={
           "text-2xl font-mono w-[120px] px-2 py-1 border rounded bg-white" +
