@@ -80,6 +80,15 @@ function getBookingEndDateTime(booking: { date: string; time: string }) {
 }
 
 function BookingStatus({status}: {status: string}) {
+  if (status === "reserved")
+    return (
+      <Badge variant="secondary" className="ml-1 text-yellow-700 bg-yellow-100 border-yellow-400">
+        <span className="flex items-center gap-1">
+          <svg width="18" height="18" viewBox="0 0 24 24" className="text-yellow-600"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm1 15h-2v-2h2Zm0-4h-2V7h2Z"/></svg>
+          Забронировано
+        </span>
+      </Badge>
+    );
   if (status === "active")
     return (
       <Badge variant="secondary" className="ml-1 text-green-700 bg-green-100 border-green-400">
@@ -253,6 +262,41 @@ const Bookings = () => {
     // eslint-disable-next-line
   }, [virtualNow, bookings]);
 
+  // <--- Новый useEffect с двойным переходом статусов --->
+  useEffect(() => {
+    // Массив обновлённых броней
+    const updated = bookings.map((b) => {
+      // 1. reserved → active если пришло время начала
+      if (b.status === "reserved") {
+        const bookingStart = getBookingStartDateTime(b);
+        if (!isNaN(bookingStart.getTime()) && virtualNow >= bookingStart) {
+          return { ...b, status: "active" };
+        }
+        return b;
+      }
+      // 2. active → completed если пришло время окончания
+      if (b.status === "active") {
+        const bookingEnd = getBookingEndDateTime(b);
+        if (!isNaN(bookingEnd.getTime()) && virtualNow >= bookingEnd) {
+          return { ...b, status: "completed" };
+        }
+        return b;
+      }
+      // 3. Остальные статусы не меняются
+      return b;
+    });
+
+    const changed =
+      bookings.length === updated.length &&
+      bookings.some((b, i) => b.status !== updated[i].status);
+
+    if (changed) {
+      setBookings(updated);
+      localStorage.setItem(BOOKINGS_LS_KEY, JSON.stringify(updated));
+    }
+    // eslint-disable-next-line
+  }, [virtualNow, bookings]);
+
   // <<< NEW: Загружаем актуальные bookings из localStorage при изменении виртуального времени >>>
   useEffect(() => {
     setBookings(initialLoad());
@@ -291,6 +335,30 @@ const Bookings = () => {
       variant: "default"
     });
   };
+
+  // --- Исправляем handleProlong (оставляем как есть) ---
+
+  // --- NEW: при загрузке заменяем активные брони на reserved если до начала осталось больше 10 минут ---
+  useEffect(() => {
+    const raw = initialLoad();
+    const now = virtualNow;
+    // поменяем статус на reserved если есть время до старта > 10 минут
+    const up = raw.map((b: any) => {
+      if (b.status === "active") {
+        const bookingStart = getBookingStartDateTime(b);
+        if (!isNaN(bookingStart.getTime())) {
+          const minDiff = differenceInMinutes(bookingStart, now);
+          // можно скорректировать порог: сейчас reserved если больше 10 минут до старта
+          if (minDiff > 10) {
+            return { ...b, status: "reserved" };
+          }
+        }
+      }
+      return b;
+    });
+    setBookings(up);
+  // eslint-disable-next-line
+  }, [virtualNow]);
 
   return (
     <div className="max-w-md mx-auto py-8 px-2">
