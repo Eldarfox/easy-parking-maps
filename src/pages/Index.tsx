@@ -1,4 +1,3 @@
-
 import MapLibreParkingMap from "@/components/MapLibreParkingMap";
 import BottomBar from "@/components/BottomBar";
 import React, { useState } from "react";
@@ -56,16 +55,13 @@ const Index = () => {
           </div>
         </header>
         <main className="flex-1 w-full overflow-hidden relative">
-          {/* Показываем выбранный тариф над картой */}
           {tariff && (
             <div className="absolute top-4 left-1/2 z-30 -translate-x-1/2">
               <TariffBanner />
             </div>
           )}
 
-          <MapLibreParkingMap
-            // убираем передачу openParkingModal, если MapLibreParkingMap не ждет этот проп
-          />
+          <MapLibreParkingMap tariff={tariff} />
 
           <ParkingModal
             open={showModal}
