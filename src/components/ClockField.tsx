@@ -20,7 +20,7 @@ function parseTimeString(str: string): Date | null {
 }
 
 type Props = {
-  value: string;
+  value: string; // "12:34:56"
   onChange: (v: string) => void;
 };
 
@@ -94,3 +94,4 @@ const ClockField: React.FC<Props> = ({ value, onChange }) => {
 };
 
 export default ClockField;
+
