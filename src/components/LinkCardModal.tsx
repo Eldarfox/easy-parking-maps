@@ -22,7 +22,7 @@ const LinkCardModal: React.FC<LinkCardModalProps> = ({ open, onOpenChange, onSuc
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      onSuccess();
+      onSuccess(cardNumber); // пробрасываем номер карты
       onOpenChange(false);
       setCardNumber("");
       setHolder("");

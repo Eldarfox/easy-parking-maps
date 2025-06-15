@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +5,7 @@ import { CreditCard, User, LogIn } from "lucide-react";
 import ClockField from "@/components/ClockField";
 import { useToast } from "@/components/ui/use-toast";
 import LinkCardModal from "@/components/LinkCardModal";
+import CardVisualization from "@/components/CardVisualization";
 
 // Вспомогательная функция для проверки авторизации
 function checkAuth() {
@@ -22,13 +22,22 @@ const Cabinet = () => {
     return localStorage.getItem(TIME_KEY) || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   });
   const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [cardNum, setCardNum] = useState(""); // Для хранения номера карты
   const { toast } = useToast();
 
   useEffect(() => {
     setIsAuth(checkAuth());
     setName(localStorage.getItem("cabinet_name") || "");
     setCardLinked(localStorage.getItem("cabinet_card") === "linked");
-    setSimTime(localStorage.getItem(TIME_KEY) || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+    setSimTime(
+      localStorage.getItem(TIME_KEY) ||
+        new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+    );
+    setCardNum(localStorage.getItem("cabinet_card_number") || ""); // загрузка номера
   }, []);
 
   function handleLogin() {
@@ -61,9 +70,11 @@ const Cabinet = () => {
     localStorage.setItem(TIME_KEY, val);
   }
 
-  function handleCardLinked() {
+  function handleCardLinked(cardNumber: string) {
     setCardLinked(true);
     localStorage.setItem("cabinet_card", "linked");
+    localStorage.setItem("cabinet_card_number", cardNumber); // сохраняем номер
+    setCardNum(cardNumber);
     toast({
       title: "Карта привязана!",
       description: "Теперь профиль разблокирован.",
@@ -121,9 +132,12 @@ const Cabinet = () => {
             <CreditCard size={18} /> Банковская карта
           </label>
           {cardLinked ? (
-            <div className="flex items-center gap-2 text-green-700 font-medium">
-              Карта привязана
-            </div>
+            <>
+              <CardVisualization cardNumber={cardNum} />
+              <div className="flex items-center gap-2 text-green-700 font-medium">
+                Карта привязана
+              </div>
+            </>
           ) : (
             <>
               <Button
@@ -136,7 +150,7 @@ const Cabinet = () => {
               <LinkCardModal
                 open={linkModalOpen}
                 onOpenChange={setLinkModalOpen}
-                onSuccess={handleCardLinked}
+                onSuccess={(num?: string) => handleCardLinked(num || "")}
               />
             </>
           )}
