@@ -13,6 +13,8 @@ function checkAuth() {
 const Cabinet = () => {
   const [isAuth, setIsAuth] = useState(false);
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [mode, setMode] = useState<"default" | "register">("default");
   const [registerName, setRegisterName] = useState("");
   const [registerPhone, setRegisterPhone] = useState("");
@@ -23,11 +25,16 @@ const Cabinet = () => {
   useEffect(() => {
     setIsAuth(checkAuth());
     setName(localStorage.getItem("cabinet_name") || "");
+    setEmail(localStorage.getItem("cabinet_email") || "");
+    setPhone(localStorage.getItem("cabinet_phone") || "");
   }, []);
 
   function handleLogin() {
     localStorage.setItem("auth_user", "true");
     setIsAuth(true);
+    setName(localStorage.getItem("cabinet_name") || "");
+    setEmail(localStorage.getItem("cabinet_email") || "");
+    setPhone(localStorage.getItem("cabinet_phone") || "");
     toast({ title: "Успешный вход!", duration: 1700 });
   }
 
@@ -57,6 +64,8 @@ const Cabinet = () => {
     localStorage.setItem("cabinet_password", registerPassword);
     setIsAuth(true);
     setName(registerName);
+    setEmail(registerEmail);
+    setPhone(registerPhone);
     setMode("default");
     // Очищаем поля после регистрации
     setRegisterName("");
@@ -82,6 +91,8 @@ const Cabinet = () => {
     localStorage.removeItem("cabinet_card_exp");
     setIsAuth(false);
     setName("");
+    setEmail("");
+    setPhone("");
   }
 
   function saveProfileData() {
@@ -212,6 +223,24 @@ const Cabinet = () => {
             placeholder="Введите ваше имя"
             value={name}
             onChange={e => setName(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="block font-semibold mb-0.5">Email</label>
+          <Input
+            value={email}
+            readOnly
+            type="email"
+            className="bg-gray-50 cursor-default"
+          />
+        </div>
+        <div>
+          <label className="block font-semibold mb-0.5">Телефон</label>
+          <Input
+            value={phone}
+            readOnly
+            type="tel"
+            className="bg-gray-50 cursor-default"
           />
         </div>
         <Button
