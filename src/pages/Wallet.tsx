@@ -21,31 +21,25 @@ const Wallet = () => {
   const [balance, setBalance] = useState(0);
   const [cardLinked, setCardLinked] = useState(false);
 
-  // Данные карты
   const [cardNum, setCardNum] = useState("");
   const [cardHolder, setCardHolder] = useState("");
   const [cardExp, setCardExp] = useState("");
   const { toast } = useToast();
 
-  // Для модалки отвязки карты
   const [unlinkDialogOpen, setUnlinkDialogOpen] = useState(false);
 
   useEffect(() => {
-    // Определяем привязана ли карта
     const isLinked = localStorage.getItem("cabinet_card") === "linked";
     setCardLinked(isLinked);
-
     setCardNum(localStorage.getItem("cabinet_card_number") || "");
     setCardHolder(localStorage.getItem("cabinet_card_holder") || "");
     setCardExp(localStorage.getItem("cabinet_card_exp") || "");
   }, []);
 
-  // Функция для пополнения баланса на указанную сумму
   const handleTopUp = (amount: number) => {
     setBalance((prev) => prev + amount);
   };
 
-  // Открыть модалку или форму для произвольного пополнения, пример простого пополнения на 1000
   const handleCustomTopUp = () => {
     if (!cardLinked) {
       toast({
@@ -57,7 +51,6 @@ const Wallet = () => {
     handleTopUp(1000);
   };
 
-  // Обработчик быстрого пополнения с учетом состояния карты
   const handleQuickTopUp = (amount: number) => {
     if (cardLinked) {
       handleTopUp(amount);
@@ -69,7 +62,6 @@ const Wallet = () => {
     }
   };
 
-  // Отвязка карты
   const handleUnlinkCard = () => {
     setUnlinkDialogOpen(true);
   };
@@ -94,7 +86,8 @@ const Wallet = () => {
   return (
     <div className="max-w-md mx-auto flex flex-col gap-6 pt-8 px-2 pb-32">
       <h1 className="text-2xl font-bold">Мой кошелек</h1>
-      {/* Блок "Доступный баланс" */}
+
+      {/* Доступный баланс */}
       <div className="rounded-2xl p-5 pb-6 shadow-xl relative overflow-hidden flex flex-col gap-3 bg-white">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2 text-gray-700 font-semibold text-lg">
@@ -104,7 +97,8 @@ const Wallet = () => {
           <WalletIcon className="text-gray-400 opacity-70" size={22} />
         </div>
         <div className="text-4xl font-bold text-black leading-snug">
-          {balance.toLocaleString()} <span className="text-3xl font-semibold">сом</span>
+          {balance.toLocaleString()}{" "}
+          <span className="text-3xl font-semibold">сом</span>
         </div>
         <div className="flex gap-3 mt-2 flex-col xs:flex-row">
           <Button
@@ -122,8 +116,9 @@ const Wallet = () => {
           </Button>
         </div>
       </div>
-      {/* Банковская карта - отдельный блок */}
-      <div className="bg-white rounded-2xl shadow-xl px-4 py-5 mt-2">
+
+      {/* Банковская карта — отдельный блок */}
+      <div className="bg-white rounded-2xl shadow-xl px-4 py-5">
         <CardSection
           cardLinked={cardLinked}
           cardNum={cardNum}
@@ -132,7 +127,8 @@ const Wallet = () => {
           onUnlinkCard={handleUnlinkCard}
         />
       </div>
-      {/* Модалка подтверждения отвязки */}
+
+      {/* Модалка подтверждения отвязки карты */}
       <Dialog open={unlinkDialogOpen} onOpenChange={setUnlinkDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -142,24 +138,21 @@ const Wallet = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4 flex gap-2">
-            <Button
-              variant="destructive"
-              onClick={confirmUnlinkCard}
-            >
+            <Button variant="destructive" onClick={confirmUnlinkCard}>
               Отвязать
             </Button>
             <DialogClose asChild>
-              <Button variant="secondary">
-                Отмена
-              </Button>
+              <Button variant="secondary">Отмена</Button>
             </DialogClose>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* Баннер партнёров - отдельный блок */}
-      <div className="bg-yellow-100 rounded-2xl shadow-xl px-4 py-4 mt-2">
+
+      {/* Партнёрский баннер — отдельный блок */}
+      <div className="bg-yellow-100 rounded-2xl shadow-xl px-4 py-4">
         <PartnerBanner />
       </div>
+
       {/* Быстрое пополнение */}
       <div className="bg-white rounded-xl shadow-sm p-4 flex flex-col gap-4">
         <div className="font-bold text-lg">Быстрое пополнение</div>
