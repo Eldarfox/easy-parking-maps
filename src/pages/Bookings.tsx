@@ -79,6 +79,12 @@ function getBookingEndDateTime(booking: { date: string; time: string }) {
   return new Date(year, month - 1, day, hour, minute);
 }
 
+const statusOrder: Record<string, number> = {
+  active: 0,
+  reserved: 1,
+  completed: 2,
+};
+
 function BookingStatus({status}: {status: string}) {
   if (status === "reserved")
     return (
@@ -262,9 +268,8 @@ const Bookings = () => {
     // eslint-disable-next-line
   }, [virtualNow, bookings]);
 
-  // <--- Новый useEffect с двойным переходом статусов --->
+  // --- Новый useEffect с переходом статусов в правильной последовательности ---
   useEffect(() => {
-    // Массив обновлённых броней
     const updated = bookings.map((b) => {
       // 1. reserved → active если пришло время начала
       if (b.status === "reserved") {
@@ -274,7 +279,7 @@ const Bookings = () => {
         }
         return b;
       }
-      // 2. active → completed если пришло время окончания
+      // 2. active → completed, если пришло время окончания
       if (b.status === "active") {
         const bookingEnd = getBookingEndDateTime(b);
         if (!isNaN(bookingEnd.getTime()) && virtualNow >= bookingEnd) {
@@ -282,7 +287,7 @@ const Bookings = () => {
         }
         return b;
       }
-      // 3. Остальные статусы не меняются
+      // 3. Остальные не меняются
       return b;
     });
 
@@ -295,9 +300,9 @@ const Bookings = () => {
       localStorage.setItem(BOOKINGS_LS_KEY, JSON.stringify(updated));
     }
     // eslint-disable-next-line
-  }, [virtualNow, bookings]);
+  }, [virtualNow]);
 
-  // <<< NEW: Загружаем актуальные bookings из localStorage при изменении виртуального времени >>>
+  // <<< NEW: Загружаем bookings из localStorage при изменении виртуального времени >>>
   useEffect(() => {
     setBookings(initialLoad());
     // eslint-disable-next-line
@@ -336,19 +341,15 @@ const Bookings = () => {
     });
   };
 
-  // --- Исправляем handleProlong (оставляем как есть) ---
-
-  // --- NEW: при загрузке заменяем активные брони на reserved если до начала осталось больше 10 минут ---
+  // --- Переход на reserved, если до начала больше 10 минут (оставляем) ---
   useEffect(() => {
     const raw = initialLoad();
     const now = virtualNow;
-    // поменяем статус на reserved если есть время до старта > 10 минут
     const up = raw.map((b: any) => {
       if (b.status === "active") {
         const bookingStart = getBookingStartDateTime(b);
         if (!isNaN(bookingStart.getTime())) {
           const minDiff = differenceInMinutes(bookingStart, now);
-          // можно скорректировать порог: сейчас reserved если больше 10 минут до старта
           if (minDiff > 10) {
             return { ...b, status: "reserved" };
           }
@@ -360,14 +361,30 @@ const Bookings = () => {
   // eslint-disable-next-line
   }, [virtualNow]);
 
+  // --- Сортировка array перед отображением ---
+  function getSortedBookings(arr: any[]) {
+    return [...arr].sort((a, b) => {
+      const soA = statusOrder[a.status] ?? 99;
+      const soB = statusOrder[b.status] ?? 99;
+      if (soA !== soB) return soA - soB;
+      // Если статус одинаков, сортируем по дате начала (ближайшие выше)
+      const dsA = getBookingStartDateTime(a);
+      const dsB = getBookingStartDateTime(b);
+      if (isNaN(dsA.getTime()) || isNaN(dsB.getTime())) return 0;
+      return dsA.getTime() - dsB.getTime();
+    });
+  }
+
+  const sortedBookings = getSortedBookings(bookings);
+
   return (
     <div className="max-w-md mx-auto py-8 px-2">
       <h1 className="text-3xl font-bold mb-1">Мои бронирования</h1>
       <div className="text-gray-500 text-base mb-6">История и активные бронирования</div>
-      {bookings.length === 0 && (
+      {sortedBookings.length === 0 && (
         <div className="text-sm text-muted-foreground text-center mt-32">Нет активных или прошедших бронирований</div>
       )}
-      {bookings.map((b) => (
+      {sortedBookings.map((b) => (
         <BookingCard
           key={b.id}
           booking={b}
