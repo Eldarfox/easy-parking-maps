@@ -67,38 +67,17 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
   const [selectedSpace, setSelectedSpace] = useState<string>("");
   const [allBookings, setAllBookings] = React.useState<BookingItem[]>([]);
 
-  React.useEffect(() => {
-    if (open) {
-      setSelectedDate(undefined);
-      setSelectedTimeRange(null);
-      setSelectedSpace("");
-      try {
-        const arr = JSON.parse(localStorage.getItem(BOOKINGS_LS_KEY) || "[]");
-        setAllBookings(Array.isArray(arr) ? arr : []);
-      } catch {
-        setAllBookings([]);
-      }
-    }
-  }, [open, parking, tariff]);
-
-  // === Генерация массива часов для CircleClock в ночном тарифе ===
+  // ВСЕ ХУКИ ЗДЕСЬ!
   const nightHoursArr = React.useMemo(() => {
     if (tariff === "night" && parking?.nightHours) {
       const { from, to } = parking.nightHours;
-      // Например: c 22 до 6 => [22,23,0,1,2,3,4,5]
       let hours: number[] = [];
       if (from < to) {
-        // например с 19 до 9 => [19,20,...,8]
         for (let h = from; h < to; h++) hours.push(h % 24);
       } else {
-        // например с 22 до 6 => 22,23,0,1,2,3,4,5
         for (let h = from; h < from + 24; h++) {
           const hr = h % 24;
-          if (from < to) {
-            if (hr >= from && hr < to) hours.push(hr);
-          } else {
-            if (hr >= from || hr < to) hours.push(hr);
-          }
+          if (hr >= from || hr < to) hours.push(hr);
           if (hr === ((to - 1 + 24) % 24)) break;
         }
       }
@@ -107,7 +86,6 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
     return [];
   }, [tariff, parking]);
 
-  // --- Логика отключения времени для места, даты
   const disabledHours = React.useMemo(() => {
     if (!parking || !selectedDate || !selectedSpace) return [];
     const selectedSpaceNum = parseInt(selectedSpace, 10);
@@ -169,7 +147,21 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
     }
   }, [tariff, selectedDate, selectedSpace]);
 
-  // Hooks должны идти до этого возврата!
+  React.useEffect(() => {
+    if (open) {
+      setSelectedDate(undefined);
+      setSelectedTimeRange(null);
+      setSelectedSpace("");
+      try {
+        const arr = JSON.parse(localStorage.getItem(BOOKINGS_LS_KEY) || "[]");
+        setAllBookings(Array.isArray(arr) ? arr : []);
+      } catch {
+        setAllBookings([]);
+      }
+    }
+  }, [open, parking, tariff]);
+
+  // ХУКИ ВСЕГДА ВЫШЕ ЛЮБЫХ RETURN
   if (!parking) return null;
 
   const nightLabel = React.useMemo(() => {
