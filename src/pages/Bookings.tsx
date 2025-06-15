@@ -61,7 +61,11 @@ function BookingCard({
     const now = new Date();
     const bookingStart = getBookingStartDateTime(booking);
     const minutesLeft = differenceInMinutes(bookingStart, now);
-    showCancel = minutesLeft >= 120; // >= 2 часа
+    // Для отладки:
+    console.log(
+      `[BookingCard] booking.id=${booking.id} | status=${booking.status} | start=${booking.date} ${booking.time} | minutesLeft=${minutesLeft} | showCancel=${minutesLeft >= 120}`
+    );
+    showCancel = minutesLeft >= 120;
   }
 
   return (
@@ -98,8 +102,14 @@ function BookingCard({
       <div className="flex gap-3 mt-4">
         {isActive && (
           <>
-            {showCancel && <Button variant="destructive" className="flex-1" onClick={onCancel}>Отменить</Button>}
-            <Button variant="secondary" className="flex-1" onClick={onProlong}>Продлить</Button>
+            {showCancel && (
+              <Button variant="destructive" className="flex-1" onClick={onCancel}>
+                Отменить
+              </Button>
+            )}
+            <Button variant="secondary" className="flex-1" onClick={onProlong}>
+              Продлить
+            </Button>
           </>
         )}
       </div>
