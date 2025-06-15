@@ -157,32 +157,6 @@ function BookingStatus({status}: {status: string}) {
   return null;
 }
 
-// --- Значок сом-валюты SVG ---
-function SomIcon({ className = "inline h-5 w-5 mr-1 -mt-0.5" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="18"
-      height="18"
-      viewBox="0 0 18 18"
-      fill="none"
-      aria-label="сом"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <circle cx="9" cy="9" r="8" stroke="#13AD6B" strokeWidth="2" fill="white"/>
-      <text
-        x="9"
-        y="13"
-        textAnchor="middle"
-        fontSize="10"
-        fontWeight="bold"
-        fill="#13AD6B"
-        fontFamily="Arial, sans-serif"
-      >С</text>
-    </svg>
-  );
-}
-
 function BookingCard({
   booking,
   onCancel,
@@ -253,9 +227,8 @@ function BookingCard({
     summary = hours * hourly;
     summaryLine = (
       <div className="text-sm text-muted-foreground flex items-center gap-1">
-        {hours} ч × {hourly}
-        <SomIcon className="w-4 h-4" />
-        /ч = <span className="font-bold flex items-center gap-1">{summary} <SomIcon className="w-4 h-4" /></span>
+        {hours} ч × {hourly}⃀
+        /ч = <span className="font-bold flex items-center gap-1">{summary}⃀</span>
       </div>
     );
   }
@@ -289,7 +262,7 @@ function BookingCard({
           <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none"><path d="M7 17v1a2 2 0 002 2h6a2 2 0 002-2v-1M17 17V9a5 5 0 00-10 0v8m10 0H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           Место {booking.place}
         </div>
-        <div className="font-bold text-xl text-black flex items-center gap-1">{summary}<SomIcon /></div>
+        <div className="font-bold text-xl text-black flex items-center gap-1">{summary}⃀</div>
       </div>
       <div className="flex gap-3 mt-4">
         {isActive && (
