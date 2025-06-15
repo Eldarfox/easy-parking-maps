@@ -34,7 +34,7 @@ function isInInterval(
   end: number,
   displayedHours: number[]
 ) {
-  // Поддержка прямого диапазона и диапазона через полночь
+  // Отмечаем сектор так, чтобы он включал все выбранные часы, включая последний!
   if (start === null || end === null) return false;
   if (start === end) return hour === start;
   const len = displayedHours.length;
@@ -43,10 +43,10 @@ function isInInterval(
   const hi = displayedHours.indexOf(hour);
   if (si === -1 || ei === -1 || hi === -1) return false;
   if (si < ei) {
-    // обычный диапазон
+    // обычный диапазон (например, 2-4 => 2,3,4)
     return hi >= si && hi <= ei;
   } else {
-    // через полночь
+    // через полночь (например, 22-3 => 22,23,0,1,2,3)
     return hi >= si || hi <= ei;
   }
 }
@@ -87,16 +87,14 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
         return;
       }
       if (nightMode && hours && hours.length > 0) {
-        // Позволяем только через полночь (или обычный ночной диапазон)
         const si = hours.indexOf(newStart);
         const ei = hours.indexOf(newEnd);
         if (si === -1 || ei === -1) {
           onChange(null);
           return;
         }
-        // swap если пользователь выбрал "впереди"
+        // swap чтобы всегда был "ночной" диапазон (через полночь)
         if (si < ei) {
-          // Меняем местами чтобы NIGHT: (пример: кликнул 6, потом 22; станет 22,6)
           [newStart, newEnd] = [newEnd, newStart];
         }
       }
@@ -117,10 +115,11 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
     const si = displayedHours.indexOf(start);
     const ei = displayedHours.indexOf(end);
     if (si === -1 || ei === -1) return [];
+
     if (si < ei) {
       return [[start, end]];
     } else {
-      // через полночь, разбиваем
+      // через полночь
       return [
         [start, displayedHours[displayedHours.length - 1]],
         [displayedHours[0], end],
@@ -165,7 +164,14 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
                 CENTER,
                 RADIUS,
                 hourToDeg(arcStart, firstH, lastH),
-                hourToDeg(arcEnd + 1 > 23 ? firstH : arcEnd + 1, firstH, lastH)
+                // ЗАХВАТ концевого часа: arcEnd+1 с учетом диапазона
+                hourToDeg(
+                  displayedHours[
+                    (displayedHours.indexOf(arcEnd) + 1) % displayedHours.length
+                  ],
+                  firstH,
+                  lastH
+                )
               )}
               fill="rgba(59,130,246,0.18)"
             />
@@ -217,12 +223,16 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
         })}
       </svg>
       <div className="mt-2 text-sm">
+        {/* Корректное отображение диапазона и пояснение "через полночь" */}
         {showInterval
-          ? start! < end!
-            ? `${getLabel(start!)} - ${getLabel(end! + 1)}`
-            : `${getLabel(start!)} - ${getLabel(
-                (end! + 1) % 24
-              )} (через полночь)`
+          ? (() => {
+              const order = displayedHours.indexOf(start!) > displayedHours.indexOf(end!) 
+                ? " (через полночь)"
+                : "";
+              // +1 – чтобы включить финальный час как выделенный диапазон (например, 2–4 => 2:00–5:00)
+              const nextHour = (end! + 1) % 24;
+              return `${getLabel(start!)} - ${getLabel(nextHour)}${order}`;
+            })()
           : selection[0] !== null
           ? `Начало: ${getLabel(selection[0]!)}`
           : "Выберите время"}
