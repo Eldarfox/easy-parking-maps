@@ -1,11 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CreditCard, User, LogIn } from "lucide-react";
 import ClockField from "@/components/ClockField";
 import { useToast } from "@/components/ui/use-toast";
-import LinkCardModal from "@/components/LinkCardModal";
-import CardVisualization from "@/components/CardVisualization";
 
 // Вспомогательная функция для проверки авторизации
 function checkAuth() {
@@ -17,7 +16,7 @@ const TIME_KEY = "cabinet_sim_time";
 const Cabinet = () => {
   const [isAuth, setIsAuth] = useState(false);
   const [name, setName] = useState("");
-  const [cardLinked, setCardLinked] = useState(false);
+  // Удаляем cardLinked
   const [simTime, setSimTime] = useState(() => {
     return (
       localStorage.getItem(TIME_KEY) ||
@@ -28,18 +27,12 @@ const Cabinet = () => {
       })
     );
   });
-  const [linkModalOpen, setLinkModalOpen] = useState(false);
-
-  // теперь три состояния для визуализации карты
-  const [cardNum, setCardNum] = useState("");
-  const [cardHolder, setCardHolder] = useState("");
-  const [cardExp, setCardExp] = useState("");
+  // Удаляем linkModalOpen, cardNum, cardHolder, cardExp
   const { toast } = useToast();
 
   useEffect(() => {
     setIsAuth(checkAuth());
     setName(localStorage.getItem("cabinet_name") || "");
-    setCardLinked(localStorage.getItem("cabinet_card") === "linked");
     setSimTime(
       localStorage.getItem(TIME_KEY) ||
         new Date().toLocaleTimeString([], {
@@ -48,9 +41,6 @@ const Cabinet = () => {
           second: "2-digit",
         })
     );
-    setCardNum(localStorage.getItem("cabinet_card_number") || "");
-    setCardHolder(localStorage.getItem("cabinet_card_holder") || "");
-    setCardExp(localStorage.getItem("cabinet_card_exp") || "");
   }, []);
 
   function handleLogin() {
@@ -71,7 +61,6 @@ const Cabinet = () => {
     localStorage.removeItem("cabinet_card_exp");
     setIsAuth(false);
     setName("");
-    setCardLinked(false);
     setSimTime(
       new Date().toLocaleTimeString([], {
         hour: "2-digit",
@@ -79,19 +68,10 @@ const Cabinet = () => {
         second: "2-digit",
       })
     );
-    setCardNum("");
-    setCardHolder("");
-    setCardExp("");
   }
 
   function saveProfileData() {
-    if (!cardLinked) {
-      toast({
-        title: "Сначала привяжите карту",
-        description: "Чтобы сохранить данные профиля и пользоваться кабинетом, необходимо привязать банковскую карту.",
-      });
-      return;
-    }
+    // Больше не нужна проверка cardLinked
     localStorage.setItem("cabinet_name", name);
     localStorage.setItem(TIME_KEY, simTime);
   }
@@ -99,23 +79,6 @@ const Cabinet = () => {
   function handleSetTime(val: string) {
     setSimTime(val);
     localStorage.setItem(TIME_KEY, val);
-  }
-
-  // теперь приходит объект с карточными данными
-  function handleCardLinked(data: { cardNumber: string; holder: string; exp: string }) {
-    setCardLinked(true);
-    localStorage.setItem("cabinet_card", "linked");
-    localStorage.setItem("cabinet_card_number", data.cardNumber);
-    localStorage.setItem("cabinet_card_holder", data.holder);
-    localStorage.setItem("cabinet_card_exp", data.exp);
-    setCardNum(data.cardNumber);
-    setCardHolder(data.holder);
-    setCardExp(data.exp);
-    toast({
-      title: "Карта привязана!",
-      description: "Теперь профиль разблокирован.",
-      duration: 2000,
-    });
   }
 
   if (!isAuth) {
@@ -151,7 +114,6 @@ const Cabinet = () => {
             placeholder="Введите ваше имя"
             value={name}
             onChange={e => setName(e.target.value)}
-            disabled={!cardLinked}
           />
         </div>
         <div>
@@ -163,36 +125,10 @@ const Cabinet = () => {
             Время «течёт» дальше, после изменения.
           </p>
         </div>
-        <div>
-          <label className="block font-semibold mb-0.5 flex gap-1 items-center">
-            <CreditCard size={18} /> Банковская карта
-          </label>
-          {cardLinked ? (
-            <div className="flex items-center gap-2 text-green-700 font-medium">
-              Карта привязана
-            </div>
-          ) : (
-            <>
-              <Button
-                onClick={() => setLinkModalOpen(true)}
-                variant="outline"
-                className="flex gap-1 items-center"
-              >
-                <CreditCard size={16} /> Привязать карту
-              </Button>
-              <LinkCardModal
-                open={linkModalOpen}
-                onOpenChange={setLinkModalOpen}
-                onSuccess={handleCardLinked}
-              />
-            </>
-          )}
-        </div>
         <Button
           onClick={saveProfileData}
           variant="default"
           className="w-full mt-2"
-          disabled={!cardLinked}
         >
           Сохранить изменения
         </Button>
@@ -203,11 +139,6 @@ const Cabinet = () => {
         >
           Выйти из аккаунта
         </Button>
-        {!cardLinked && (
-          <div className="mt-3 text-red-500 text-center text-sm">
-            Для доступа к функциям кабинета сначала привяжите банковскую карту.
-          </div>
-        )}
       </div>
     </div>
   );
