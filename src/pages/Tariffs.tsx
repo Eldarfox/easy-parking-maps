@@ -5,16 +5,19 @@ import { useNavigate } from "react-router-dom";
 
 const tariffs = [
   {
+    key: "hourly",
     title: "Почасовой",
     price: "100₽/час",
     description: "Гибкая оплата только за то время, что ваша машина на парковке. Идеально для краткосрочной остановки.",
   },
   {
+    key: "daily",
     title: "Дневной",
     price: "600₽/день",
     description: "Фиксированная цена на целый день. Неограниченное количество въездов и выездов.",
   },
   {
+    key: "night",
     title: "Ночной",
     price: "300₽/ночь",
     description: "Выгодный тариф для парковки ночью (с 20:00 до 08:00). Ваш автомобиль под охраной.",
@@ -24,8 +27,9 @@ const tariffs = [
 const Tariffs = () => {
   const navigate = useNavigate();
 
-  const handleTariffSelect = () => {
-    navigate("/");
+  const handleTariffSelect = (tariffKey: string) => {
+    // Передаем выбранный тариф через state
+    navigate("/", { state: { tariff: tariffKey } });
   };
 
   return (
@@ -36,7 +40,7 @@ const Tariffs = () => {
       </p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
         {tariffs.map((tariff) => (
-          <Card key={tariff.title} className="flex flex-col justify-between shadow-md">
+          <Card key={tariff.key} className="flex flex-col justify-between shadow-md">
             <CardHeader className="pb-2">
               <CardTitle>{tariff.title}</CardTitle>
               <CardDescription className="text-lg font-semibold text-primary">{tariff.price}</CardDescription>
@@ -45,7 +49,11 @@ const Tariffs = () => {
               <p className="text-gray-700">{tariff.description}</p>
             </CardContent>
             <div className="px-6 pb-4 mt-auto">
-              <Button className="w-full" variant="outline" onClick={handleTariffSelect}>
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => handleTariffSelect(tariff.key)}
+              >
                 Выбрать
               </Button>
             </div>

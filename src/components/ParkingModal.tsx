@@ -11,6 +11,9 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import ClockTimeSelector from "./ClockTimeSelector";
 
+// Добавим тип тарифа:
+type TariffType = "hourly" | "daily" | "night" | undefined;
+
 const BOOKINGS_LS_KEY = "bookings_list_lovable";
 
 type BookingItem = {
@@ -45,16 +48,18 @@ function mapParkingToBooking(parking: Parking, date: Date, time: string, spaceNu
     date: format(date, "dd.MM.yyyy"),
     time,
     place: `Место #${spaceNum + 1}`,
-    price: (parking.prices[0]?.price || 0),
+    price: parking.prices[0]?.price || 0,
     parkingId: parking.id,
     spaceNum,
   };
 }
 
-const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Parking | null }> = ({
+// Изменяем пропсы, чтобы принимать tariff:
+const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Parking | null; tariff?: TariffType }> = ({
   open,
   onClose,
   parking,
+  tariff,
 }) => {
   const { toast } = useToast();
 
@@ -75,15 +80,14 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
         setAllBookings([]);
       }
     }
-  }, [open, parking]);
+  }, [open, parking, tariff]);
 
-  // Вычисляем массив занятых часов для выбранного места (spaceNum), даты
+  // --- Логика отключения времени для места, даты
   const disabledHours = React.useMemo(() => {
     if (!parking || !selectedDate || !selectedSpace) return [];
     const selectedSpaceNum = parseInt(selectedSpace, 10);
     const thisDate = format(selectedDate, "dd.MM.yyyy");
 
-    // Фильтруем бронирования только по нужной парковке, дате, месту
     const busyRanges: [number, number][] = allBookings
       .filter(
         (b) =>
@@ -95,19 +99,15 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
         const [start, end] = b.time
           .split(" - ")
           .map((t) => parseInt(t.split(":")[0], 10));
-        // end хранит последний час ИЗ booking (например 13:00 - 15:00, end=15)
-        // нужно сделать диапазон [start,end-1] включительно
         return [start, end - 1] as [number, number];
       });
 
-    // Собираем все отдельные часы из всех занятых диапазонов
     const disabled: number[] = [];
     busyRanges.forEach(([from, to]) => {
       for (let h = from; h <= to; h++) {
         disabled.push(h);
       }
     });
-    // Оставляем только уникальные
     return Array.from(new Set(disabled));
   }, [allBookings, parking, selectedDate, selectedSpace]);
 
@@ -137,6 +137,14 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
     return Array.from({ length: parking.totalSpaces }, (_, i) => i);
   }, [parking]);
 
+  // --- Новое: подгоняем тайм-рендж для "дневного" тарифа сразу
+  React.useEffect(() => {
+    if (tariff === "daily" && selectedDate && selectedSpace) {
+      // Дневной тариф: с 08 до 23 (8–22 включительно, т.е. 08:00-23:00)
+      setSelectedTimeRange([8, 22]);
+    }
+  }, [tariff, selectedDate, selectedSpace]);
+
   // Hooks должны идти до этого возврата!
   if (!parking) return null;
 
@@ -147,7 +155,7 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
   };
 
   const handleBooking = () => {
-    if (!selectedDate || !selectedTimeRange || selectedSpace === "") return;
+    if (!selectedDate || (!selectedTimeRange && tariff !== "daily") || selectedSpace === "") return;
 
     const arrRaw = localStorage.getItem(BOOKINGS_LS_KEY);
     let arr = [];
@@ -158,8 +166,10 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
       arr = [];
     }
 
-    const [start, end] = selectedTimeRange;
-    const timeStr = `${start.toString().padStart(2, "0")}:00 - ${(end + 1).toString().padStart(2, "0")}:00`;
+    const timeStr =
+      tariff === "daily"
+        ? "08:00 - 23:00"
+        : getTimeStr();
 
     const booking = {
       ...mapParkingToBooking(parking, selectedDate, timeStr, parseInt(selectedSpace, 10)),
@@ -217,18 +227,27 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
                 locale={ru}
               />
             </div>
-            {/* Выбор времени — часы */}
-            <div className="flex-1">
-              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
-                <ClockIcon className="w-4 h-4" />
-                Время (часы)
+            {/* Выбор времени — часы, скрываем для дневного тарифа */}
+            {tariff !== "daily" && (
+              <div className="flex-1">
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+                  <ClockIcon className="w-4 h-4" />
+                  Время (часы)
+                </div>
+                <ClockTimeSelector
+                  value={selectedTimeRange}
+                  onChange={setSelectedTimeRange}
+                  disabledHours={disabledHours}
+                />
               </div>
-              <ClockTimeSelector
-                value={selectedTimeRange}
-                onChange={setSelectedTimeRange}
-                disabledHours={disabledHours}
-              />
-            </div>
+            )}
+            {tariff === "daily" && (
+              <div className="flex-1 flex flex-col justify-end">
+                <div className="text-sm text-gray-600 mt-8 font-medium">
+                  Время: <span className="font-semibold">08:00 - 23:00</span>
+                </div>
+              </div>
+            )}
           </div>
           {/* Селектор парковочного места */}
           <div className="mb-4">
@@ -236,21 +255,45 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
               <CircleParking className="w-4 h-4" />
               Место парковки
             </div>
-            <Select value={selectedSpace} onValueChange={(val) => { setSelectedSpace(val); setSelectedTimeRange(null); }} disabled={!selectedDate}>
+            <Select value={selectedSpace} onValueChange={(val) => { setSelectedSpace(val); if(tariff !== "daily") setSelectedTimeRange(null); }} disabled={!selectedDate}>
               <SelectTrigger>
                 <SelectValue placeholder="Выберите место" />
               </SelectTrigger>
               <SelectContent>
                 {allSpaces.map((spaceNum) =>
-                  unavailableSpaces.includes(spaceNum) ? (
-                    <SelectItem key={spaceNum} value={spaceNum.toString()} disabled>
-                      Место #{spaceNum + 1} (занято)
-                    </SelectItem>
-                  ) : (
-                    <SelectItem key={spaceNum} value={spaceNum.toString()}>
-                      Место #{spaceNum + 1}
-                    </SelectItem>
-                  )
+                  // Для дневного тарифа показываем занятость по всему интервалу 08-23
+                  tariff === "daily"
+                    ? (() => {
+                        // Проверяем, занят ли весь интервал для этого места thisDate
+                        const thisDate =
+                          selectedDate && format(selectedDate, "dd.MM.yyyy");
+                        const isBusy = allBookings.some(
+                          (b) =>
+                            b.parkingId === parking.id &&
+                            b.date === thisDate &&
+                            b.spaceNum === spaceNum &&
+                            b.time === "08:00 - 23:00"
+                        );
+                        return (
+                          <SelectItem
+                            key={spaceNum}
+                            value={spaceNum.toString()}
+                            disabled={isBusy}
+                          >
+                            Место #{spaceNum + 1}
+                            {isBusy ? " (занято)" : ""}
+                          </SelectItem>
+                        );
+                      })()
+                    : (unavailableSpaces.includes(spaceNum) ? (
+                        <SelectItem key={spaceNum} value={spaceNum.toString()} disabled>
+                          Место #{spaceNum + 1} (занято)
+                        </SelectItem>
+                      ) : (
+                        <SelectItem key={spaceNum} value={spaceNum.toString()}>
+                          Место #{spaceNum + 1}
+                        </SelectItem>
+                      ))
                 )}
               </SelectContent>
             </Select>
@@ -258,7 +301,11 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
           <Button
             className="w-full font-bold"
             onClick={handleBooking}
-            disabled={!selectedDate || !selectedTimeRange || selectedSpace === ""}
+            disabled={
+              !selectedDate ||
+              (tariff !== "daily" && !selectedTimeRange) ||
+              selectedSpace === ""
+            }
           >
             Забронировать
           </Button>
