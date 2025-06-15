@@ -75,17 +75,31 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
 
   function selectHour(hour: number) {
     if (isDisabled(hour, disabledHours)) return;
+    // NIGHT MODE SWAP FORBIDDEN RANGES
     if (!value || value[0] === null || (value && value[0] !== null && value[1] !== null)) {
-      // Первый клик
+      // Первый клик  
       onChange([hour, null]);
     } else if (value && value[0] !== null && value[1] === null) {
-      const newStart = value[0];
-      const newEnd = hour;
+      let newStart = value[0];
+      let newEnd = hour;
       if (newStart === newEnd) {
         onChange(null);
         return;
       }
-      // валидный диапазон — любые два часа
+      if (nightMode && hours && hours.length > 0) {
+        // Позволяем только через полночь (или обычный ночной диапазон)
+        const si = hours.indexOf(newStart);
+        const ei = hours.indexOf(newEnd);
+        if (si === -1 || ei === -1) {
+          onChange(null);
+          return;
+        }
+        // swap если пользователь выбрал "впереди"
+        if (si < ei) {
+          // Меняем местами чтобы NIGHT: (пример: кликнул 6, потом 22; станет 22,6)
+          [newStart, newEnd] = [newEnd, newStart];
+        }
+      }
       onChange([newStart, newEnd]);
     }
   }
