@@ -10,21 +10,14 @@ const BOOKINGS_LS_KEY = "bookings_list_lovable";
 // --- New: Bishkek timezone helpers ---
 const BISHKEK_TIMEZONE_OFFSET = 6 * 60; // Минуты UTC+6
 
-function getBookingStartDateTime(booking: {date: string, time: string}) {
-  let dateString = booking.date;
-  let timeString = booking.time;
+// Унифицированная функция: получает локальное время начала брони
+function getBookingStartDateTime(booking: { date: string, time: string }) {
+  const [day, month, year] = booking.date.includes(".")
+    ? booking.date.split(".").map(Number)
+    : booking.date.split("-").reverse().map(Number);
 
-  let day, month, year;
-  if (dateString.includes(".")) {
-    [day, month, year] = dateString.split(".").map(Number);
-  } else {
-    [year, month, day] = dateString.split("-").map(Number);
-  }
-  const [hour, minute = 0] = timeString.split(":").map(Number);
-  // Создаем дату ЛОКАЛЬНО, потом переводим к UTC, потом плюсуем +6
-  const localDate = new Date(year, month - 1, day, hour, minute);
-  const utcDate = new Date(localDate.getTime() + localDate.getTimezoneOffset() * 60000);
-  return new Date(utcDate.getTime() + BISHKEK_TIMEZONE_OFFSET * 60000);
+  const [hour, minute = 0] = booking.time.split(":").map(Number);
+  return new Date(year, month - 1, day, hour, minute);
 }
 
 function BookingStatus({status}: {status: string}) {
@@ -72,20 +65,19 @@ function BookingCard({
 
   if (isActive) {
     const now = new Date();
-    // Получить текущее время в Бишкеке (UTC+6)
-    const bishkekNow = new Date(now.getTime() + (BISHKEK_TIMEZONE_OFFSET - now.getTimezoneOffset()) * 60000);
     const bookingStart = getBookingStartDateTime(booking);
 
-    const isFuture = isBefore(bishkekNow, bookingStart);
-    const minutesLeft = Math.abs(differenceInMinutes(bookingStart, bishkekNow));
+    // Новая логика: показывать, если до старта осталось больше 2 часов (120 минут)
+    const isFuture = isBefore(now, bookingStart);
+    const minutesLeft = differenceInMinutes(bookingStart, now);
     showCancel = isFuture && minutesLeft >= 120;
 
     // Для отладки:
     console.log(
-      `Текущее время Бишкека: ${bishkekNow.toLocaleString("ru-RU", { timeZone: "Asia/Bishkek" })} | ` +
-      `Начало брони: ${bookingStart.toLocaleString("ru-RU", { timeZone: "Asia/Bishkek" })} | ` +
-      `Минут осталось: ${minutesLeft} | ` +
-      `Показывать отмену: ${showCancel}`
+      `Сейчас: ${now.toLocaleString()} | ` +
+      `Начало брони: ${bookingStart.toLocaleString()} | ` +
+      `Минут до начала: ${minutesLeft} | ` +
+      `Можно отменить: ${showCancel}`
     );
   }
 
