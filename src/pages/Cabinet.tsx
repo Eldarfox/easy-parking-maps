@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CreditCard, User, LogIn, Shield as AdminIcon } from "lucide-react";
+import { CreditCard, User, LogIn, Shield as AdminIcon, ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -14,6 +14,8 @@ function checkAuth() {
 const Cabinet = () => {
   const [isAuth, setIsAuth] = useState(false);
   const [name, setName] = useState("");
+  const [mode, setMode] = useState<"default" | "register">("default");
+  const [registerName, setRegisterName] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -24,11 +26,28 @@ const Cabinet = () => {
   function handleLogin() {
     localStorage.setItem("auth_user", "true");
     setIsAuth(true);
+    toast({ title: "Успешный вход!", duration: 1700 });
   }
-  function handleRegister() {
+
+  function handleRegisterStart() {
+    setMode("register");
+    setRegisterName("");
+  }
+
+  function handleRegisterSubmit(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    if (!registerName.trim()) {
+      toast({ title: "Пожалуйста, введите имя" });
+      return;
+    }
     localStorage.setItem("auth_user", "true");
+    localStorage.setItem("cabinet_name", registerName);
     setIsAuth(true);
+    setName(registerName);
+    setMode("default");
+    toast({ title: "Регистрация завершена!", description: "Добро пожаловать, " + registerName, duration: 1600 });
   }
+
   function handleLogout() {
     localStorage.removeItem("auth_user");
     localStorage.removeItem("cabinet_name");
@@ -42,6 +61,7 @@ const Cabinet = () => {
 
   function saveProfileData() {
     localStorage.setItem("cabinet_name", name);
+    toast({ title: "Изменения сохранены" });
   }
 
   // --------- Новый компонент AdminButton ---------
@@ -61,6 +81,48 @@ const Cabinet = () => {
   };
   // ------------------------------------------------
 
+  // Форма регистрации
+  if (!isAuth && mode === "register") {
+    return (
+      <div className="flex flex-col items-center justify-center h-full pt-24 gap-5">
+        <h1 className="text-2xl font-bold mb-1 flex items-center gap-2">
+          <User size={28} /> Регистрация
+        </h1>
+        <form
+          className="bg-white rounded-xl p-6 shadow-lg border flex flex-col gap-4 min-w-[320px] w-full max-w-xs"
+          onSubmit={handleRegisterSubmit}
+        >
+          <div>
+            <label className="block font-semibold mb-1">Ваше имя</label>
+            <Input
+              placeholder="Введите имя"
+              value={registerName}
+              onChange={e => setRegisterName(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <Button
+            type="submit"
+            variant="default"
+            className="w-full"
+          >
+            Зарегистрироваться
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full flex gap-2 items-center"
+            onClick={() => setMode("default")}
+          >
+            <ArrowLeft size={17} /> Назад
+          </Button>
+        </form>
+        <AdminButton />
+      </div>
+    );
+  }
+
+  // Базовый режим — выбор входа/регистрации
   if (!isAuth) {
     return (
       <div className="flex flex-col items-center justify-center h-full pt-24 gap-5">
@@ -74,7 +136,7 @@ const Cabinet = () => {
           <Button onClick={handleLogin} variant="default" className="flex gap-1 items-center">
             <LogIn size={18} /> Войти
           </Button>
-          <Button onClick={handleRegister} variant="secondary" className="flex gap-1 items-center">
+          <Button onClick={handleRegisterStart} variant="secondary" className="flex gap-1 items-center">
             <User size={18} /> Зарегистрироваться
           </Button>
         </div>
@@ -83,6 +145,7 @@ const Cabinet = () => {
     );
   }
 
+  // После входа — профиль
   return (
     <div className="flex flex-col items-center pt-20 px-4 max-w-md mx-auto w-full">
       <AdminButton />
