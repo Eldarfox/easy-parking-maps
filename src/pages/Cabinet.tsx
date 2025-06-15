@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { CreditCard, User, LogIn } from "lucide-react";
 import ClockField from "@/components/ClockField";
 import { useToast } from "@/components/ui/use-toast";
+import LinkCardModal from "@/components/LinkCardModal";
 
 // Вспомогательная функция для проверки авторизации
 function checkAuth() {
@@ -20,6 +21,7 @@ const Cabinet = () => {
   const [simTime, setSimTime] = useState(() => {
     return localStorage.getItem(TIME_KEY) || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   });
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -59,7 +61,7 @@ const Cabinet = () => {
     localStorage.setItem(TIME_KEY, val);
   }
 
-  function handleLinkCard() {
+  function handleCardLinked() {
     setCardLinked(true);
     localStorage.setItem("cabinet_card", "linked");
     toast({
@@ -109,7 +111,7 @@ const Cabinet = () => {
           <label className="block font-semibold mb-0.5 flex gap-1 items-center">
             🕒 Текущее время (можно менять)
           </label>
-          <ClockField value={simTime} onChange={handleSetTime} disabled={!cardLinked} />
+          <ClockField value={simTime} onChange={handleSetTime} /* убрал disabled - ClockField его не принимает */ />
           <p className="text-xs text-muted-foreground mt-1">
             Время «течёт» дальше, после изменения.
           </p>
@@ -123,9 +125,20 @@ const Cabinet = () => {
               Карта привязана
             </div>
           ) : (
-            <Button onClick={handleLinkCard} variant="outline" className="flex gap-1 items-center">
-              <CreditCard size={16} /> Привязать карту
-            </Button>
+            <>
+              <Button
+                onClick={() => setLinkModalOpen(true)}
+                variant="outline"
+                className="flex gap-1 items-center"
+              >
+                <CreditCard size={16} /> Привязать карту
+              </Button>
+              <LinkCardModal
+                open={linkModalOpen}
+                onOpenChange={setLinkModalOpen}
+                onSuccess={handleCardLinked}
+              />
+            </>
           )}
         </div>
         <Button
