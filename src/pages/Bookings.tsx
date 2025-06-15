@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,26 @@ import { useToast } from "@/hooks/use-toast";
 import { parse, isBefore, differenceInMinutes } from "date-fns";
 
 const BOOKINGS_LS_KEY = "bookings_list_lovable";
+
+// --- New: Bishkek timezone helpers ---
+const BISHKEK_TIMEZONE_OFFSET = 6 * 60; // Минуты UTC+6
+
+function getBookingStartDateTime(booking: {date: string, time: string}) {
+  let dateString = booking.date;
+  let timeString = booking.time;
+
+  let day, month, year;
+  if (dateString.includes(".")) {
+    [day, month, year] = dateString.split(".").map(Number);
+  } else {
+    [year, month, day] = dateString.split("-").map(Number);
+  }
+  const [hour, minute = 0] = timeString.split(":").map(Number);
+  // Создаем дату ЛОКАЛЬНО, потом переводим к UTC, потом плюсуем +6
+  const localDate = new Date(year, month - 1, day, hour, minute);
+  const utcDate = new Date(localDate.getTime() + localDate.getTimezoneOffset() * 60000);
+  return new Date(utcDate.getTime() + BISHKEK_TIMEZONE_OFFSET * 60000);
+}
 
 function BookingStatus({status}: {status: string}) {
   if (status === "active")
@@ -28,21 +47,6 @@ function BookingStatus({status}: {status: string}) {
       </Badge>
     );
   return null;
-}
-
-function getBookingStartDateTime(booking: {date: string, time: string}) {
-  let dateString = booking.date;
-  let timeString = booking.time;
-
-  // Поддержка dd.MM.yyyy
-  let day, month, year;
-  if (dateString.includes(".")) {
-    [day, month, year] = dateString.split(".").map(Number);
-  } else {
-    [year, month, day] = dateString.split("-").map(Number);
-  }
-  const [hour, minute = 0] = timeString.split(":").map(Number);
-  return new Date(year, month - 1, day, hour, minute);
 }
 
 function BookingCard({
@@ -68,21 +72,20 @@ function BookingCard({
 
   if (isActive) {
     const now = new Date();
+    // Получить текущее время в Бишкеке (UTC+6)
+    const bishkekNow = new Date(now.getTime() + (BISHKEK_TIMEZONE_OFFSET - now.getTimezoneOffset()) * 60000);
     const bookingStart = getBookingStartDateTime(booking);
 
-    // Исправление 1: Проверяем что событие в будущем
-    const isFuture = isBefore(now, bookingStart);
-
-    // Исправление 2: Берем абсолютное значение разницы
-    const minutesLeft = Math.abs(differenceInMinutes(bookingStart, now));
-
-    // Условие: показывать если событие в будущем И осталось > 2 часов
+    const isFuture = isBefore(bishkekNow, bookingStart);
+    const minutesLeft = Math.abs(differenceInMinutes(bookingStart, bishkekNow));
     showCancel = isFuture && minutesLeft >= 120;
 
+    // Для отладки:
     console.log(
-      `[BookingCard] booking.id=${booking.id} | status=${booking.status} | ` +
-      `start=${booking.date} ${booking.time} | minutesLeft=${minutesLeft} | ` +
-      `isFuture=${isFuture} | showCancel=${showCancel}`
+      `Текущее время Бишкека: ${bishkekNow.toLocaleString("ru-RU", { timeZone: "Asia/Bishkek" })} | ` +
+      `Начало брони: ${bookingStart.toLocaleString("ru-RU", { timeZone: "Asia/Bishkek" })} | ` +
+      `Минут осталось: ${minutesLeft} | ` +
+      `Показывать отмену: ${showCancel}`
     );
   }
 
