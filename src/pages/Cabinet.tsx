@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CreditCard, User, LogIn } from "lucide-react";
 import ClockField from "@/components/ClockField";
+import { useToast } from "@/components/ui/use-toast";
 
 // Вспомогательная функция для проверки авторизации
 function checkAuth() {
@@ -19,6 +20,7 @@ const Cabinet = () => {
   const [simTime, setSimTime] = useState(() => {
     return localStorage.getItem(TIME_KEY) || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   });
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsAuth(checkAuth());
@@ -41,6 +43,13 @@ const Cabinet = () => {
   }
 
   function saveProfileData() {
+    if (!cardLinked) {
+      toast({
+        title: "Сначала привяжите карту",
+        description: "Чтобы сохранить данные профиля и пользоваться кабинетом, необходимо привязать банковскую карту.",
+      });
+      return;
+    }
     localStorage.setItem("cabinet_name", name);
     localStorage.setItem(TIME_KEY, simTime);
   }
@@ -53,6 +62,11 @@ const Cabinet = () => {
   function handleLinkCard() {
     setCardLinked(true);
     localStorage.setItem("cabinet_card", "linked");
+    toast({
+      title: "Карта привязана!",
+      description: "Теперь профиль разблокирован.",
+      duration: 2000,
+    });
   }
 
   if (!isAuth) {
@@ -88,13 +102,14 @@ const Cabinet = () => {
             placeholder="Введите ваше имя"
             value={name}
             onChange={e => setName(e.target.value)}
+            disabled={!cardLinked}
           />
         </div>
         <div>
           <label className="block font-semibold mb-0.5 flex gap-1 items-center">
             🕒 Текущее время (можно менять)
           </label>
-          <ClockField value={simTime} onChange={handleSetTime} />
+          <ClockField value={simTime} onChange={handleSetTime} disabled={!cardLinked} />
           <p className="text-xs text-muted-foreground mt-1">
             Время «течёт» дальше, после изменения.
           </p>
@@ -117,6 +132,7 @@ const Cabinet = () => {
           onClick={saveProfileData}
           variant="default"
           className="w-full mt-2"
+          disabled={!cardLinked}
         >
           Сохранить изменения
         </Button>
@@ -127,6 +143,11 @@ const Cabinet = () => {
         >
           Выйти из аккаунта
         </Button>
+        {!cardLinked && (
+          <div className="mt-3 text-red-500 text-center text-sm">
+            Для доступа к функциям кабинета сначала привяжите банковскую карту.
+          </div>
+        )}
       </div>
     </div>
   );
