@@ -23,12 +23,13 @@ const CardVisualization: React.FC<CardVisualizationProps> = ({
   scheme = "default",
 }) => (
   <div
-    className={`relative flex flex-col justify-between rounded-xl px-6 py-5 shadow-lg text-white w-full max-w-xs h-36 my-1 transition-all
+    className={`relative flex flex-col justify-between rounded-xl px-6 py-5 shadow-lg text-white w-full h-36 my-1 transition-all
       ${background === "gradient"
         ? "bg-gradient-to-br from-violet-500 via-indigo-400 to-orange-400"
         : "bg-gradient-to-tr from-indigo-600 to-violet-500"
       }`}
-    style={{ minWidth: 290, minHeight: 140 }}
+    // ширина по-умолчанию — 100%, без max-w или minWidth
+    style={{ height: 144 }}
   >
     {/* Логотип VISA — крупный, в правом нижнем углу */}
     {scheme === "visa" && (
@@ -49,3 +50,4 @@ const CardVisualization: React.FC<CardVisualizationProps> = ({
 );
 
 export default CardVisualization;
+

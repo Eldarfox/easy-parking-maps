@@ -29,7 +29,7 @@ const CardSection: React.FC<CardSectionProps> = ({
 
   return (
     <div className="relative w-full flex justify-center">
-      {/* Крест — теперь просто серый, без подложки */}
+      {/* Крест — просто серый, без подложки */}
       {onUnlinkCard && (
         <button
           type="button"
@@ -40,15 +40,18 @@ const CardSection: React.FC<CardSectionProps> = ({
           <X className="text-gray-400" size={22} />
         </button>
       )}
-      <CardVisualization
-        cardNumber={cardNum}
-        holder={cardHolder}
-        exp={cardExp}
-        background="gradient"
-        scheme="visa"
-      />
+      <div className="w-full">
+        <CardVisualization
+          cardNumber={cardNum}
+          holder={cardHolder}
+          exp={cardExp}
+          background="gradient"
+          scheme="visa"
+        />
+      </div>
     </div>
   );
 };
 
 export default CardSection;
+
