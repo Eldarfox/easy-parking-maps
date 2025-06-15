@@ -135,7 +135,7 @@ const Cabinet = () => {
         <Button
           onClick={handleLogout}
           variant="destructive"
-          className="w-full"
+          className="w-full bg-red-600 hover:bg-red-700 text-white"
         >
           Выйти из аккаунта
         </Button>
@@ -145,3 +145,4 @@ const Cabinet = () => {
 };
 
 export default Cabinet;
+
