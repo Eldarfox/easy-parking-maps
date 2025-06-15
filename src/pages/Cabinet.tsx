@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +15,9 @@ const Cabinet = () => {
   const [name, setName] = useState("");
   const [mode, setMode] = useState<"default" | "register">("default");
   const [registerName, setRegisterName] = useState("");
+  const [registerPhone, setRegisterPhone] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -32,25 +34,48 @@ const Cabinet = () => {
   function handleRegisterStart() {
     setMode("register");
     setRegisterName("");
+    setRegisterPhone("");
+    setRegisterEmail("");
+    setRegisterPassword("");
   }
 
   function handleRegisterSubmit(e?: React.FormEvent) {
     if (e) e.preventDefault();
-    if (!registerName.trim()) {
-      toast({ title: "Пожалуйста, введите имя" });
+    if (
+      !registerName.trim() ||
+      !registerPhone.trim() ||
+      !registerEmail.trim() ||
+      !registerPassword.trim()
+    ) {
+      toast({ title: "Пожалуйста, заполните все поля" });
       return;
     }
     localStorage.setItem("auth_user", "true");
     localStorage.setItem("cabinet_name", registerName);
+    localStorage.setItem("cabinet_phone", registerPhone);
+    localStorage.setItem("cabinet_email", registerEmail);
+    localStorage.setItem("cabinet_password", registerPassword);
     setIsAuth(true);
     setName(registerName);
     setMode("default");
-    toast({ title: "Регистрация завершена!", description: "Добро пожаловать, " + registerName, duration: 1600 });
+    // Очищаем поля после регистрации
+    setRegisterName("");
+    setRegisterPhone("");
+    setRegisterEmail("");
+    setRegisterPassword("");
+    toast({
+      title: "Регистрация завершена!",
+      description: "Добро пожаловать, " + registerName,
+      duration: 1600,
+    });
   }
 
   function handleLogout() {
     localStorage.removeItem("auth_user");
     localStorage.removeItem("cabinet_name");
+    localStorage.removeItem("cabinet_phone");
+    localStorage.removeItem("cabinet_email");
+    localStorage.removeItem("cabinet_password");
     localStorage.removeItem("cabinet_card");
     localStorage.removeItem("cabinet_card_number");
     localStorage.removeItem("cabinet_card_holder");
@@ -93,12 +118,40 @@ const Cabinet = () => {
           onSubmit={handleRegisterSubmit}
         >
           <div>
+            <label className="block font-semibold mb-1">Телефон</label>
+            <Input
+              placeholder="+7 (___) ___-__-__"
+              value={registerPhone}
+              onChange={e => setRegisterPhone(e.target.value)}
+              type="tel"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="block font-semibold mb-1">Email</label>
+            <Input
+              placeholder="Введите e-mail"
+              value={registerEmail}
+              onChange={e => setRegisterEmail(e.target.value)}
+              type="email"
+            />
+          </div>
+          <div>
+            <label className="block font-semibold mb-1">Пароль</label>
+            <Input
+              placeholder="Пароль"
+              value={registerPassword}
+              onChange={e => setRegisterPassword(e.target.value)}
+              type="password"
+            />
+          </div>
+          <div>
             <label className="block font-semibold mb-1">Ваше имя</label>
             <Input
               placeholder="Введите имя"
               value={registerName}
               onChange={e => setRegisterName(e.target.value)}
-              autoFocus
+              type="text"
             />
           </div>
           <Button
