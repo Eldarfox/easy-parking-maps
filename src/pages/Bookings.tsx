@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { parse, isBefore, differenceInMinutes } from "date-fns";
+import { useVirtualNow } from "@/hooks/useVirtualNow";
 
 const BOOKINGS_LS_KEY = "bookings_list_lovable";
 
@@ -85,6 +86,9 @@ function BookingCard({
   const isActive = booking.status === "active";
   let showCancel = false;
 
+  // Используем виртуальное время приложения:
+  const now = useVirtualNow();
+
   // ----- DEBUG вывод для отслеживания ситуации -----
   // Покажем, что получено на входе:
   console.log(
@@ -92,7 +96,6 @@ function BookingCard({
   );
 
   if (isActive) {
-    const now = new Date();
     const bookingStart = getBookingStartDateTime(booking);
 
     // Показываем тип и значение расчёта даты
@@ -108,7 +111,7 @@ function BookingCard({
 
       // Для отладки:
       console.log(
-        `Сейчас: ${now.toLocaleString()} | ` +
+        `Виртуальное сейчас: ${now.toLocaleString()} | ` +
         `Начало брони: ${bookingStart.toLocaleString()} | ` +
         `Минут до начала: ${minutesLeft} | ` +
         `Можно отменить: ${showCancel}`
