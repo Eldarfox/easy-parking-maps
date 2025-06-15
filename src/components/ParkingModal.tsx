@@ -211,19 +211,22 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
           </div>
           <div className="mb-4 flex gap-4 max-sm:flex-col">
             {/* Выбор даты */}
-            <div className="flex-1">
+            <div className={`flex-1 ${tariff === "daily" ? "min-w-0" : ""}`}>
               <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
                 <CalendarIcon className="w-4 h-4" />
                 Дата
               </div>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                fromDate={new Date()}
-                className="p-3 pointer-events-auto border rounded-md"
-                locale={ru}
-              />
+              {/* Для дневного тарифа увеличиваем календарь */}
+              <div className={tariff === "daily" ? "w-full flex-1" : ""}>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  fromDate={new Date()}
+                  className={`p-3 pointer-events-auto border rounded-md ${tariff === "daily" ? "w-full h-[320px] max-w-full" : ""}`}
+                  locale={ru}
+                />
+              </div>
             </div>
             {/* Блок выбора времени полностью убираем для дневного тарифа */}
             {tariff !== "daily" && (
