@@ -19,10 +19,21 @@ const Cabinet = () => {
   const [name, setName] = useState("");
   const [cardLinked, setCardLinked] = useState(false);
   const [simTime, setSimTime] = useState(() => {
-    return localStorage.getItem(TIME_KEY) || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    return (
+      localStorage.getItem(TIME_KEY) ||
+      new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    );
   });
   const [linkModalOpen, setLinkModalOpen] = useState(false);
-  const [cardNum, setCardNum] = useState(""); // Для хранения номера карты
+
+  // теперь три состояния для визуализации карты
+  const [cardNum, setCardNum] = useState("");
+  const [cardHolder, setCardHolder] = useState("");
+  const [cardExp, setCardExp] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -37,7 +48,9 @@ const Cabinet = () => {
           second: "2-digit",
         })
     );
-    setCardNum(localStorage.getItem("cabinet_card_number") || ""); // загрузка номера
+    setCardNum(localStorage.getItem("cabinet_card_number") || "");
+    setCardHolder(localStorage.getItem("cabinet_card_holder") || "");
+    setCardExp(localStorage.getItem("cabinet_card_exp") || "");
   }, []);
 
   function handleLogin() {
@@ -70,11 +83,16 @@ const Cabinet = () => {
     localStorage.setItem(TIME_KEY, val);
   }
 
-  function handleCardLinked(cardNumber: string) {
+  // теперь приходит объект с карточными данными
+  function handleCardLinked(data: { cardNumber: string; holder: string; exp: string }) {
     setCardLinked(true);
     localStorage.setItem("cabinet_card", "linked");
-    localStorage.setItem("cabinet_card_number", cardNumber); // сохраняем номер
-    setCardNum(cardNumber);
+    localStorage.setItem("cabinet_card_number", data.cardNumber);
+    localStorage.setItem("cabinet_card_holder", data.holder);
+    localStorage.setItem("cabinet_card_exp", data.exp);
+    setCardNum(data.cardNumber);
+    setCardHolder(data.holder);
+    setCardExp(data.exp);
     toast({
       title: "Карта привязана!",
       description: "Теперь профиль разблокирован.",
@@ -122,7 +140,7 @@ const Cabinet = () => {
           <label className="block font-semibold mb-0.5 flex gap-1 items-center">
             🕒 Текущее время (можно менять)
           </label>
-          <ClockField value={simTime} onChange={handleSetTime} /* убрал disabled - ClockField его не принимает */ />
+          <ClockField value={simTime} onChange={handleSetTime} />
           <p className="text-xs text-muted-foreground mt-1">
             Время «течёт» дальше, после изменения.
           </p>
@@ -133,7 +151,7 @@ const Cabinet = () => {
           </label>
           {cardLinked ? (
             <>
-              <CardVisualization cardNumber={cardNum} />
+              <CardVisualization cardNumber={cardNum} holder={cardHolder} exp={cardExp} />
               <div className="flex items-center gap-2 text-green-700 font-medium">
                 Карта привязана
               </div>
@@ -150,7 +168,7 @@ const Cabinet = () => {
               <LinkCardModal
                 open={linkModalOpen}
                 onOpenChange={setLinkModalOpen}
-                onSuccess={(num?: string) => handleCardLinked(num || "")}
+                onSuccess={handleCardLinked}
               />
             </>
           )}

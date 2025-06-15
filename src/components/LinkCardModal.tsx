@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 interface LinkCardModalProps {
   open: boolean;
   onOpenChange: (val: boolean) => void;
-  onSuccess: () => void;
+  // теперь onSuccess получает объект с данными
+  onSuccess: (data: { cardNumber: string; holder: string; exp: string }) => void;
 }
 
 const LinkCardModal: React.FC<LinkCardModalProps> = ({ open, onOpenChange, onSuccess }) => {
@@ -22,7 +23,11 @@ const LinkCardModal: React.FC<LinkCardModalProps> = ({ open, onOpenChange, onSuc
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      onSuccess(cardNumber); // пробрасываем номер карты
+      // сохраняем все в localStorage — смогут подхватить и при перезагрузке
+      localStorage.setItem("cabinet_card_number", cardNumber);
+      localStorage.setItem("cabinet_card_holder", holder);
+      localStorage.setItem("cabinet_card_exp", exp);
+      onSuccess({ cardNumber, holder, exp });
       onOpenChange(false);
       setCardNumber("");
       setHolder("");
