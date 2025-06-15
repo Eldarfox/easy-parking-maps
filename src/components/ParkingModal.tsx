@@ -38,13 +38,16 @@ const getNextBookingId = () => {
   }
 };
 
-function mapParkingToBooking(parking: Parking, date: Date, time: string, spaceNum: number) {
+function mapParkingToBooking(parking: Parking, fromDate: Date, toDate: Date, time: string, spaceNum: number) {
+  // Добавим диапазон дат для ночных броней (fromDate, toDate)
   return {
     id: getNextBookingId(),
     status: "active",
     title: parking.name,
     address: parking.address,
-    date: format(date, "dd.MM.yyyy"),
+    date: toDate
+      ? `${format(fromDate, "dd.MM.yyyy")} - ${format(toDate, "dd.MM.yyyy")}`
+      : format(fromDate, "dd.MM.yyyy"),
     time,
     place: `Место #${spaceNum + 1}`,
     price: parking.prices[0]?.price || 0,
@@ -177,6 +180,29 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
     return `${start.toString().padStart(2, "0")}:00 - ${(end + 1).toString().padStart(2, "0")}:00`;
   };
 
+  // Новый способ расчёта времени и дат для ночного тарифа
+  const getNightRangeDatetime = () => {
+    if (!selectedDate || !selectedTimeRange) return { time: "", toDate: undefined };
+    const [start, end] = selectedTimeRange;
+
+    // Если период через полночь (например, 21 -> 1)
+    let toDate: Date | undefined = undefined;
+    let timeStr = "";
+
+    if (start > end) {
+      // пример: 21 -> 1 = 21:00-02:00, бронь с даты + 1 день
+      toDate = new Date(selectedDate);
+      toDate.setDate(selectedDate.getDate() + 1);
+      timeStr =
+        `${start.toString().padStart(2, "0")}:00 - ${(end + 1).toString().padStart(2, "0")}:00`;
+    } else {
+      timeStr =
+        `${start.toString().padStart(2, "0")}:00 - ${(end + 1).toString().padStart(2, "0")}:00`;
+      toDate = undefined;
+    }
+    return { time: timeStr, toDate };
+  };
+
   const handleBooking = () => {
     if (!selectedDate || (!selectedTimeRange && tariff !== "daily") || selectedSpace === "") return;
 
@@ -189,15 +215,23 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
       arr = [];
     }
 
-    const timeStr =
-      tariff === "daily"
-        ? "08:00 - 23:00"
-        : getTimeStr();
+    let timeStr = "";
+    let toDate: Date | undefined = undefined;
 
-    const booking = {
-      ...mapParkingToBooking(parking!, selectedDate, timeStr, parseInt(selectedSpace, 10)),
-      time: timeStr,
-    };
+    if (tariff === "night") {
+      const result = getNightRangeDatetime();
+      timeStr = result.time;
+      toDate = result.toDate;
+    } else if (tariff === "daily") {
+      timeStr = "08:00 - 23:00";
+    } else {
+      timeStr = getTimeStr();
+    }
+
+    // Для ночной брони: диапазон дат (текущий и +1 день, если нужно)
+    const booking = tariff === "night"
+      ? mapParkingToBooking(parking!, selectedDate, toDate, timeStr, parseInt(selectedSpace, 10))
+      : mapParkingToBooking(parking!, selectedDate, undefined, timeStr, parseInt(selectedSpace, 10));
 
     arr.unshift(booking);
     localStorage.setItem(BOOKINGS_LS_KEY, JSON.stringify(arr));
