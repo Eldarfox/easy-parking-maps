@@ -5,6 +5,15 @@ import React, { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import CardSection from "@/components/CardSection";
 import PartnerBanner from "@/components/PartnerBanner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 const quickTopUps = [500, 1000, 2000, 5000];
 
@@ -17,6 +26,9 @@ const Wallet = () => {
   const [cardHolder, setCardHolder] = useState("");
   const [cardExp, setCardExp] = useState("");
   const { toast } = useToast();
+
+  // Для модалки отвязки карты
+  const [unlinkDialogOpen, setUnlinkDialogOpen] = useState(false);
 
   useEffect(() => {
     // Определяем привязана ли карта
@@ -57,6 +69,28 @@ const Wallet = () => {
     }
   };
 
+  // Отвязка карты
+  const handleUnlinkCard = () => {
+    setUnlinkDialogOpen(true);
+  };
+
+  const confirmUnlinkCard = () => {
+    setCardLinked(false);
+    setCardNum("");
+    setCardHolder("");
+    setCardExp("");
+    localStorage.removeItem("cabinet_card");
+    localStorage.removeItem("cabinet_card_number");
+    localStorage.removeItem("cabinet_card_holder");
+    localStorage.removeItem("cabinet_card_exp");
+    setUnlinkDialogOpen(false);
+    toast({
+      title: "Карта отвязана",
+      description: "Банковская карта успешно отвязана.",
+      duration: 2000,
+    });
+  };
+
   return (
     <div className="max-w-md mx-auto flex flex-col gap-6 pt-8 px-2 pb-32">
       <h1 className="text-2xl font-bold">Мой кошелек</h1>
@@ -95,8 +129,33 @@ const Wallet = () => {
           cardNum={cardNum}
           cardHolder={cardHolder}
           cardExp={cardExp}
+          onUnlinkCard={handleUnlinkCard}
         />
       </div>
+      {/* Модалка подтверждения отвязки */}
+      <Dialog open={unlinkDialogOpen} onOpenChange={setUnlinkDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Отвязать банковскую карту?</DialogTitle>
+            <DialogDescription>
+              Вы уверены, что хотите отвязать карту? Данные сохраняться не будут.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex gap-2">
+            <Button
+              variant="destructive"
+              onClick={confirmUnlinkCard}
+            >
+              Отвязать
+            </Button>
+            <DialogClose asChild>
+              <Button variant="secondary">
+                Отмена
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Баннер партнёров - отдельный блок */}
       <div className="bg-yellow-100 rounded-2xl shadow-xl px-4 py-4 mt-2">
         <PartnerBanner />
