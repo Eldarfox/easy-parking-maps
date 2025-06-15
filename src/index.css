@@ -3,41 +3,29 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
-
+/* Основные цвета (оставляем как ранее, только добавим новые utility-классы для красоты) */
 @layer base {
   :root {
-    --background: 242 100% 98%;         /* Светло-голубой фон */
-    --foreground: 252 80% 18%;          /* Наиболее тёмный фиолетово-синий */
-
-    --card: 244 96% 96%;                /* Голубоватый белый */
+    --background: 242 100% 98%;
+    --foreground: 252 80% 18%;
+    --card: 244 96% 96%;
     --card-foreground: 252 90% 8%;
-
     --popover: 244 96% 98%;
     --popover-foreground: 252 90% 12%;
-
-    --primary: 256 95% 68%;             /* Ярко-фиолетовый */
+    --primary: 256 95% 68%;
     --primary-foreground: 240 100% 99%;
-
-    --secondary: 207 89% 69%;           /* Ярко-голубой */
+    --secondary: 207 89% 69%;
     --secondary-foreground: 242 85% 15%;
-
-    --muted: 230 90% 92%;               /* Серо-голубой для muted */
+    --muted: 230 90% 92%;
     --muted-foreground: 245 30% 40%;
-
-    --accent: 250 85% 80%;              /* Светлый голубой */
+    --accent: 250 85% 80%;
     --accent-foreground: 252 90% 12%;
-
-    --destructive: 335 100% 77%;        /* Светлый розово-фиолетовый */
+    --destructive: 335 100% 77%;
     --destructive-foreground: 252 80% 12%;
-
-    --border: 238 60% 90%;              /* Светлый голубой */
-    --input: 246 50% 85%;               /* Голубой для инпутов */
-    --ring: 256 95% 68%;                /* Фиолетовый highlight */
-
+    --border: 238 60% 90%;
+    --input: 246 50% 85%;
+    --ring: 256 95% 68%;
     --radius: 0.5rem;
-
-    /* sidebar for shadcn */
     --sidebar-background: 244 96% 96%;
     --sidebar-foreground: 250 60% 25%;
     --sidebar-primary: 252 80% 40%;
@@ -51,32 +39,23 @@
   .dark {
     --background: 252 60% 13%;
     --foreground: 240 100% 98%;
-
     --card: 249 67% 23%;
     --card-foreground: 240 100% 98%;
-
     --popover: 249 67% 18%;
     --popover-foreground: 240 100% 98%;
-
     --primary: 252 98% 63%;
     --primary-foreground: 240 100% 99%;
-
     --secondary: 207 89% 62%;
     --secondary-foreground: 240 100% 98%;
-
     --muted: 245 16% 22%;
     --muted-foreground: 245 30% 78%;
-
     --accent: 240 100% 25%;
     --accent-foreground: 240 100% 98%;
-
     --destructive: 335 85% 47%;
     --destructive-foreground: 240 100% 98%;
-
     --border: 248 22% 22%;
     --input: 248 22% 22%;
     --ring: 252 98% 63%;
-
     --sidebar-background: 252 60% 13%;
     --sidebar-foreground: 252 60% 85%;
     --sidebar-primary: 252 90% 50%;
@@ -97,3 +76,55 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* --- ФИОРЕЛЕТОВО-ГОЛУБЫЕ КРАСИВЫЕ СТИЛИ --- */
+
+/* Градиентный фон для секций и карточек */
+.card-gradient {
+  @apply shadow-xl rounded-2xl bg-gradient-to-br from-violet-500 to-blue-400;
+  color: #fff;
+}
+.card-gradient-light {
+  @apply bg-gradient-to-br from-violet-300 via-blue-200 to-blue-100;
+}
+
+.section-violet-blue {
+  @apply bg-gradient-to-r from-violet-100 via-blue-100 to-violet-200;
+}
+
+/* Градиентная кнопка */
+.btn-gradient {
+  @apply bg-gradient-to-r from-violet-500 to-blue-400 text-white font-bold shadow-lg;
+  @apply hover:from-violet-600 hover:to-blue-500 transition-colors;
+  border: none;
+}
+
+.btn-gradient-outline {
+  @apply bg-transparent border-2 border-violet-500 text-violet-600 font-bold;
+  @apply hover:bg-gradient-to-r hover:from-violet-100 hover:to-blue-100 transition-colors;
+}
+
+/* Градиент для заголовков */
+.title-gradient {
+  background: linear-gradient(90deg,#8B5CF6 0%,#38BDF8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Утилиты для блеска и свечения */
+.glow {
+  box-shadow: 0 4px 32px 0 rgba(139,92,246,0.25), 0 1.5px 9px 0 rgba(56,189,248,0.15);
+}
+
+@media (max-width: 600px) {
+  .card-gradient {
+    padding: 1.25rem;
+  }
+  .btn-gradient {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Пусть utility-классы будут вовсе без !important — их можно миксовать с Tailwind */
