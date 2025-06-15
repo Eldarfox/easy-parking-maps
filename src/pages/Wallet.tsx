@@ -4,18 +4,20 @@ import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import CardVisualization from "@/components/CardVisualization";
+import PartnerBanner from "@/components/PartnerBanner";
+import CardSection from "@/components/CardSection";
 
 const quickTopUps = [500, 1000, 2000, 5000];
 
 const Wallet = () => {
   const [balance, setBalance] = useState(0);
   const [cardLinked, setCardLinked] = useState(false);
-  const { toast } = useToast();
 
   // Данные карты
   const [cardNum, setCardNum] = useState("");
   const [cardHolder, setCardHolder] = useState("");
   const [cardExp, setCardExp] = useState("");
+  const { toast } = useToast();
 
   useEffect(() => {
     // Определяем привязана ли карта
@@ -71,28 +73,6 @@ const Wallet = () => {
         <div className="text-4xl font-bold text-black leading-snug">
           {balance.toLocaleString()} <span className="text-3xl font-semibold">сом</span>
         </div>
-        {/* Карта под балансом — по примеру */}
-        {cardLinked && (
-          <div className="w-full flex justify-center my-2">
-            <div className="w-full">
-              <CardVisualization
-                cardNumber={cardNum}
-                holder={cardHolder}
-                exp={cardExp}
-                background="orange"
-                scheme="visa"
-              />
-            </div>
-          </div>
-        )}
-        {/* Info banner (заглушка, без функциональности) */}
-        <div className="mt-2 mb-2 rounded-lg bg-yellow-200 flex items-center px-3 py-2 gap-3">
-          <img src="/lovable-uploads/4975540c-677d-41a1-ac37-4ae0135c9ed7.png" alt="" className="w-10 h-10 rounded-md object-cover" />
-          <div className="text-yellow-900 text-sm font-medium flex-1">
-            Хотите стать нашим партнером? <br />
-            <span className="text-xs font-normal">Начни зарабатывать прямо сейчас</span>
-          </div>
-        </div>
         <div className="flex gap-3 mt-2 flex-col xs:flex-row">
           <Button
             variant="secondary"
@@ -109,6 +89,18 @@ const Wallet = () => {
           </Button>
         </div>
       </div>
+
+      {/* Банковская карта отдельно */}
+      <CardSection
+        cardLinked={cardLinked}
+        cardNum={cardNum}
+        cardHolder={cardHolder}
+        cardExp={cardExp}
+      />
+
+      {/* Баннер партнёров отдельно */}
+      <PartnerBanner />
+
       {/* Быстрое пополнение */}
       <div className="bg-white rounded-xl shadow-sm p-4 flex flex-col gap-4">
         <div className="font-bold text-lg">Быстрое пополнение</div>
