@@ -1,8 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CreditCard, User, LogIn, Shield as AdminIcon } from "lucide-react";
-import ClockField from "@/components/ClockField";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -11,51 +11,14 @@ function checkAuth() {
   return localStorage.getItem("auth_user") === "true";
 }
 
-const TIME_KEY = "cabinet_sim_time";
-
-// --------- Новый компонент AdminButton ---------
-const AdminButton = () => {
-  const navigate = useNavigate();
-  return (
-    <Button
-      size="sm"
-      variant="outline"
-      className="fixed top-4 right-4 z-50 px-3 py-2 rounded-lg shadow border border-blue-200 bg-white text-blue-700 flex gap-2 items-center hover:bg-blue-100 transition"
-      onClick={() => navigate("/admin")}
-    >
-      <AdminIcon size={18} />
-      <span className="font-semibold text-sm">Админка</span>
-    </Button>
-  );
-};
-// ------------------------------------------------
-
 const Cabinet = () => {
   const [isAuth, setIsAuth] = useState(false);
   const [name, setName] = useState("");
-  const [simTime, setSimTime] = useState(() => {
-    return (
-      localStorage.getItem(TIME_KEY) ||
-      new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      })
-    );
-  });
   const { toast } = useToast();
 
   useEffect(() => {
     setIsAuth(checkAuth());
     setName(localStorage.getItem("cabinet_name") || "");
-    setSimTime(
-      localStorage.getItem(TIME_KEY) ||
-        new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        })
-    );
   }, []);
 
   function handleLogin() {
@@ -69,31 +32,34 @@ const Cabinet = () => {
   function handleLogout() {
     localStorage.removeItem("auth_user");
     localStorage.removeItem("cabinet_name");
-    localStorage.removeItem(TIME_KEY);
     localStorage.removeItem("cabinet_card");
     localStorage.removeItem("cabinet_card_number");
     localStorage.removeItem("cabinet_card_holder");
     localStorage.removeItem("cabinet_card_exp");
     setIsAuth(false);
     setName("");
-    setSimTime(
-      new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      })
-    );
   }
 
   function saveProfileData() {
     localStorage.setItem("cabinet_name", name);
-    localStorage.setItem(TIME_KEY, simTime);
   }
 
-  function handleSetTime(val: string) {
-    setSimTime(val);
-    localStorage.setItem(TIME_KEY, val);
-  }
+  // --------- Новый компонент AdminButton ---------
+  const AdminButton = () => {
+    const navigate = useNavigate();
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        className="fixed top-4 right-4 z-50 px-3 py-2 rounded-lg shadow border border-blue-200 bg-white text-blue-700 flex gap-2 items-center hover:bg-blue-100 transition"
+        onClick={() => navigate("/admin")}
+      >
+        <AdminIcon size={18} />
+        <span className="font-semibold text-sm">Админка</span>
+      </Button>
+    );
+  };
+  // ------------------------------------------------
 
   if (!isAuth) {
     return (
@@ -131,15 +97,6 @@ const Cabinet = () => {
             value={name}
             onChange={e => setName(e.target.value)}
           />
-        </div>
-        <div>
-          <label className="block font-semibold mb-0.5 flex gap-1 items-center">
-            🕒 Текущее время (можно менять)
-          </label>
-          <ClockField value={simTime} onChange={handleSetTime} />
-          <p className="text-xs text-muted-foreground mt-1">
-            Время «течёт» дальше, после изменения.
-          </p>
         </div>
         <Button
           onClick={saveProfileData}
