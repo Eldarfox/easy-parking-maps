@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -63,17 +64,26 @@ function BookingCard({
   onProlong?: () => void;
 }) {
   const isActive = booking.status === "active";
+  let showCancel = false;
 
-  let showCancel = true;
   if (isActive) {
     const now = new Date();
     const bookingStart = getBookingStartDateTime(booking);
-    const minutesLeft = differenceInMinutes(bookingStart, now);
-    // Для отладки:
+
+    // Исправление 1: Проверяем что событие в будущем
+    const isFuture = isBefore(now, bookingStart);
+
+    // Исправление 2: Берем абсолютное значение разницы
+    const minutesLeft = Math.abs(differenceInMinutes(bookingStart, now));
+
+    // Условие: показывать если событие в будущем И осталось > 2 часов
+    showCancel = isFuture && minutesLeft >= 120;
+
     console.log(
-      `[BookingCard] booking.id=${booking.id} | status=${booking.status} | start=${booking.date} ${booking.time} | minutesLeft=${minutesLeft} | showCancel=${minutesLeft >= 120}`
+      `[BookingCard] booking.id=${booking.id} | status=${booking.status} | ` +
+      `start=${booking.date} ${booking.time} | minutesLeft=${minutesLeft} | ` +
+      `isFuture=${isFuture} | showCancel=${showCancel}`
     );
-    showCancel = minutesLeft >= 120;
   }
 
   return (
