@@ -1,3 +1,4 @@
+
 import { CreditCard, Plus, Wallet as WalletIcon, History, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
@@ -82,6 +83,16 @@ const Wallet = () => {
     toast({
       title: "Карта отвязана",
       description: "Банковская карта успешно отвязана.",
+      duration: 2000,
+    });
+  };
+
+  // Функция для обработки выбора способа пополнения
+  const handleTopupProvider = (provider: string) => {
+    setTopupModalOpen(false);
+    toast({
+      title: "Вы выбрали:",
+      description: provider,
       duration: 2000,
     });
   };
@@ -252,3 +263,5 @@ const Wallet = () => {
 };
 
 export default Wallet;
+
+// ... (file end)
