@@ -79,6 +79,47 @@ function getBookingEndDateTime(booking: { date: string; time: string }) {
   return new Date(year, month - 1, day, hour, minute);
 }
 
+// --- Новый хелпер: вычислить количество полных/частичных часов между двумя временем ---
+function getBookingHours(booking: { time: string }) {
+  // Ожидается формат "HH:MM - HH:MM"
+  if (!booking.time || !booking.time.includes("-")) return 1;
+  const [fromStr, toStr] = booking.time.split("-").map((x) => x.trim());
+  const [hF, mF] = fromStr.split(":").map(Number);
+  const [hT, mT] = toStr.split(":").map(Number);
+  if (
+    isNaN(hF) ||
+    isNaN(hT) ||
+    isNaN(mF) ||
+    isNaN(mT)
+  )
+    return 1;
+  let diff =
+    (hT * 60 + mT) -
+    (hF * 60 + mF);
+  if (diff <= 0) diff += 24 * 60; // Если ночная и через полночь
+  const hours = Math.ceil(diff / 60);
+  return hours;
+}
+
+// --- Получение почасовой цены из данных парковки (этот кусок берём из LS) ---
+function getParkingHourlyRate(booking: any) {
+  try {
+    // Паркинг id у нас хранится в booking.parkingId
+    const parkingsRaw = localStorage.getItem("parkings_data_lovable");
+    if (!parkingsRaw) return booking.price || 100;
+    const parkings = JSON.parse(parkingsRaw);
+    const p = parkings.find((x: any) => x.id === booking.parkingId);
+    // Находим нужный прайс
+    if (p && Array.isArray(p.prices)) {
+      const hourly = p.prices.find((pr: any) => pr.type?.toLowerCase().includes("час"));
+      if (hourly && Number(hourly.price) > 0) return Number(hourly.price);
+    }
+    return booking.price || 100;
+  } catch {
+    return booking.price || 100;
+  }
+}
+
 const statusOrder: Record<string, number> = {
   active: 0,
   reserved: 1,
@@ -130,6 +171,7 @@ function BookingCard({
     time: string;
     place: string;
     price: number;
+    parkingId?: string;
   };
   onCancel?: () => void;
   onProlong?: () => void;
@@ -175,6 +217,21 @@ function BookingCard({
     }
   }
 
+  // --- NEW: расчет суммы ---
+  let summary = booking.price;
+  let summaryLine = null;
+  // Проверяем — если формат времени "HH:MM - HH:MM", то почасовой
+  if (booking.time?.includes("-") && booking.time.match(/\d{2}:\d{2}/g)?.length === 2) {
+    const hours = getBookingHours(booking);
+    const hourly = getParkingHourlyRate(booking);
+    summary = hours * hourly;
+    summaryLine = (
+      <div className="text-sm text-muted-foreground">
+        {hours} ч × {hourly} ₽/ч = <span className="font-bold">{summary} ₽</span>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white border rounded-xl shadow-sm mb-4 p-5 animate-fade-in">
       <div className="flex items-center mb-1 justify-between">
@@ -204,7 +261,7 @@ function BookingCard({
           <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none"><path d="M7 17v1a2 2 0 002 2h6a2 2 0 002-2v-1M17 17V9a5 5 0 00-10 0v8m10 0H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           Место {booking.place}
         </div>
-        <div className="font-bold text-xl text-black">{booking.price} ₽</div>
+        <div className="font-bold text-xl text-black">{summary} ₽</div>
       </div>
       <div className="flex gap-3 mt-4">
         {isActive && (
