@@ -222,13 +222,13 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
                   Время: <span className="font-semibold">08:00 - 23:00</span>
                 </div>
               )}
-              <div className={`flex-1 min-h-0 w-full ${tariff === "daily" ? "" : ""}`}>
+              <div className={`flex-1 min-h-0 w-full ${tariff === "daily" ? "flex justify-center items-center" : ""}`}>
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   fromDate={new Date()}
-                  className={`border rounded-md ${tariff === "daily" ? "flex-1 min-h-0 w-full h-full p-0" : "p-3"} pointer-events-auto`}
+                  className={`border rounded-md ${tariff === "daily" ? "p-3" : "p-3"} pointer-events-auto`}
                   locale={ru}
                 />
               </div>
