@@ -29,6 +29,8 @@ const Wallet = () => {
   const [unlinkDialogOpen, setUnlinkDialogOpen] = useState(false);
   const [linkCardModalOpen, setLinkCardModalOpen] = useState(false);
 
+  const [topupModalOpen, setTopupModalOpen] = useState(false);
+
   useEffect(() => {
     const isLinked = localStorage.getItem("cabinet_card") === "linked";
     setCardLinked(isLinked);
@@ -42,14 +44,7 @@ const Wallet = () => {
   };
 
   const handleCustomTopUp = () => {
-    if (!cardLinked) {
-      toast({
-        title: "Привяжите карту",
-        description: "Для пополнения необходимо привязать карту.",
-      });
-      return;
-    }
-    handleTopUp(1000);
+    setTopupModalOpen(true);
   };
 
   const handleQuickTopUp = (amount: number) => {
@@ -189,6 +184,44 @@ const Wallet = () => {
             </Button>
             <DialogClose asChild>
               <Button variant="secondary">Отмена</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Модалка выбора способа пополнения */}
+      <Dialog open={topupModalOpen} onOpenChange={setTopupModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Выберите способ пополнения</DialogTitle>
+            <DialogDescription>Через какую систему вы хотите пополнить баланс?</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 mt-4">
+            <Button
+              variant="secondary"
+              className="w-full justify-start"
+              onClick={() => handleTopupProvider("Мбанк")}
+            >
+              <span className="font-medium text-base">МБанк</span>
+            </Button>
+            <Button
+              variant="secondary"
+              className="w-full justify-start"
+              onClick={() => handleTopupProvider("О!деньги")}
+            >
+              <span className="font-medium text-base">О! Деньги</span>
+            </Button>
+            <Button
+              variant="secondary"
+              className="w-full justify-start"
+              onClick={() => handleTopupProvider("Оптима")}
+            >
+              <span className="font-medium text-base">Оптима Банк</span>
+            </Button>
+          </div>
+          <DialogFooter className="mt-4">
+            <DialogClose asChild>
+              <Button variant="outline" className="w-full">Отмена</Button>
             </DialogClose>
           </DialogFooter>
         </DialogContent>
