@@ -81,6 +81,32 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
     }
   }, [open, parking, tariff]);
 
+  // === Генерация массива часов для CircleClock в ночном тарифе ===
+  const nightHoursArr = React.useMemo(() => {
+    if (tariff === "night" && parking?.nightHours) {
+      const { from, to } = parking.nightHours;
+      // Например: c 22 до 6 => [22,23,0,1,2,3,4,5]
+      let hours: number[] = [];
+      if (from < to) {
+        // например с 19 до 9 => [19,20,...,8]
+        for (let h = from; h < to; h++) hours.push(h % 24);
+      } else {
+        // например с 22 до 6 => 22,23,0,1,2,3,4,5
+        for (let h = from; h < from + 24; h++) {
+          const hr = h % 24;
+          if (from < to) {
+            if (hr >= from && hr < to) hours.push(hr);
+          } else {
+            if (hr >= from || hr < to) hours.push(hr);
+          }
+          if (hr === ((to - 1 + 24) % 24)) break;
+        }
+      }
+      return hours;
+    }
+    return [];
+  }, [tariff, parking]);
+
   // --- Логика отключения времени для места, даты
   const disabledHours = React.useMemo(() => {
     if (!parking || !selectedDate || !selectedSpace) return [];
@@ -145,6 +171,14 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
 
   // Hooks должны идти до этого возврата!
   if (!parking) return null;
+
+  const nightLabel = React.useMemo(() => {
+    if (tariff === "night" && parking?.nightHours) {
+      const { from, to } = parking.nightHours;
+      return `Время: ${from.toString().padStart(2, "0")}:00 - ${to.toString().padStart(2, "0")}:00`;
+    }
+    return null;
+  }, [tariff, parking]);
 
   const getTimeStr = () => {
     if (!selectedTimeRange) return "";
@@ -211,16 +245,19 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
           </div>
           <div className="mb-4 flex gap-4 max-sm:flex-col">
             {/* Выбор даты */}
-            <div className={`flex-1 min-w-0 flex flex-col ${tariff === "daily" ? "h-[340px]" : ""}`}>
+            <div className={`flex-1 min-w-0 flex flex-col`}>
               <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
                 <CalendarIcon className="w-4 h-4" />
                 Дата
               </div>
-              {/* Показываем время сверху при дневном тарифе */}
+              {/* Показываем время сверху при дневном и ночном тарифе */}
               {tariff === "daily" && (
                 <div className="text-sm text-gray-600 font-medium mb-2">
                   Время: <span className="font-semibold">08:00 - 23:00</span>
                 </div>
+              )}
+              {tariff === "night" && nightLabel && (
+                <div className="text-sm text-gray-600 font-medium mb-2">{nightLabel}</div>
               )}
               <div className={`flex-1 min-h-0 w-full ${tariff === "daily" ? "flex justify-center items-center" : ""}`}>
                 <Calendar
@@ -228,12 +265,12 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   fromDate={new Date()}
-                  className={`border rounded-md ${tariff === "daily" ? "p-3" : "p-3"} pointer-events-auto`}
+                  className="border rounded-md p-3 pointer-events-auto"
                   locale={ru}
                 />
               </div>
             </div>
-            {/* Блок выбора времени полностью убираем для дневного тарифа */}
+            {/* Блок выбора времени — для дневного нет; для ночного свои часы */}
             {tariff !== "daily" && (
               <div className="flex-1">
                 <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
@@ -244,6 +281,7 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
                   value={selectedTimeRange}
                   onChange={setSelectedTimeRange}
                   disabledHours={disabledHours}
+                  hours={tariff === "night" && nightHoursArr.length > 0 ? nightHoursArr : undefined}
                 />
               </div>
             )}

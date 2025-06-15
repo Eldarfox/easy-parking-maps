@@ -1,14 +1,18 @@
+
 import React from "react";
 
 type ClockTimeSelectorProps = {
   value: [number, number] | null;
   onChange: (val: [number, number] | null) => void;
   disabledHours?: number[];
+  hours?: number[]; // список отображаемых часов
 };
 
-const HOURS = Array.from({ length: 16 }, (_, i) => i + 8); // 8-23
-
-export const hourToDeg = (hour: number) => ((hour - 8) / 15) * 360;
+export const hourToDeg = (hour: number, first: number, last: number) => {
+  const range = ((last - first + 24) % 24) + 1;
+  let idx = ((hour - first + 24) % 24);
+  return (idx / range) * 360;
+};
 
 const RADIUS = 80;
 const CENTER = 100;
@@ -19,24 +23,29 @@ function isDisabled(hour: number, disabledHours?: number[]) {
 
 const getLabel = (h: number) => h.toString().padStart(2, "0"); // Только часы
 
-const arrowColor = "#2563eb";
-const arrowWidth = 3;
-
 const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
   value,
   onChange,
   disabledHours = [],
+  hours // если не указаны — стандартные с 8 до 23
 }) => {
+  // откуда и докуда часы:
+  const displayedHours = hours && hours.length > 0
+    ? hours
+    : Array.from({ length: 16 }, (_, i) => i + 8); // [8,23]
+
+  const firstH = displayedHours[0];
+  const lastH = displayedHours[displayedHours.length - 1];
+
   const [selection, setSelection] = React.useState<[number | null, number | null]>([null, null]);
 
-  // Синхронизация с value из props
   React.useEffect(() => {
     if (!value) setSelection([null, null]);
     else setSelection([value[0], value[1]]);
   }, [value]);
 
   function getHandlePos(hour: number) {
-    const deg = hourToDeg(hour) - 90;
+    const deg = hourToDeg(hour, firstH, lastH) - 90;
     const rad = (deg * Math.PI) / 180;
     return {
       x: CENTER + RADIUS * Math.cos(rad),
@@ -44,23 +53,18 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
     };
   }
 
-  // Минималистичная логика выбора часа
   function selectHour(hour: number) {
     if (isDisabled(hour, disabledHours)) return;
-
     const [start, end] = selection;
-
     if (start === null || (start !== null && end !== null)) {
-      // Первый клик — установить начало
       setSelection([hour, null]);
       onChange(null);
     } else if (start !== null && end === null) {
-      // Второй клик — установить конец
+      // Позволяем выбирать только в рамках отображаемых часов!
       const newStart = Math.min(start, hour);
       const newEnd = Math.max(start, hour);
-
-      // Проверка: нет ли disabled часов между ними
-      const inRange = HOURS.filter(h => h > newStart && h <= newEnd);
+      // disabled часы внутри
+      const inRange = displayedHours.filter(h => h > newStart && h <= newEnd);
       const anyDisabled = inRange.some(h => isDisabled(h, disabledHours));
       if (anyDisabled) return;
 
@@ -81,7 +85,7 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
         {/* Основа круга */}
         <circle cx={CENTER} cy={CENTER} r={RADIUS} fill="#f1f5f9" />
         {/* Серые секторы для занятых часов */}
-        {HOURS.map((h) =>
+        {displayedHours.map((h) =>
           isDisabled(h, disabledHours) ? (
             <path
               key={`sect-${h}`}
@@ -89,8 +93,8 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
                 CENTER,
                 CENTER,
                 RADIUS,
-                hourToDeg(h),
-                hourToDeg(h + 1)
+                hourToDeg(h, firstH, lastH),
+                hourToDeg(h + 1 > 23 ? firstH : h + 1, firstH, lastH)
               )}
               fill="rgba(150,150,150,0.5)"
             />
@@ -103,14 +107,14 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
               CENTER,
               CENTER,
               RADIUS,
-              hourToDeg(selection[0]!),
-              hourToDeg(selection[1]! + 1)
+              hourToDeg(selection[0]!, firstH, lastH),
+              hourToDeg(selection[1]! + 1 > 23 ? firstH : selection[1]! + 1, firstH, lastH)
             )}
             fill="rgba(59,130,246,0.18)"
           />
         )}
         {/* Часовые отметки и кликабельные зоны */}
-        {HOURS.map((h) => {
+        {displayedHours.map((h) => {
           const { x, y } = getHandlePos(h);
           const selected =
             selection[0] !== null &&
