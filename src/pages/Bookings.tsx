@@ -1,9 +1,10 @@
+
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { parse, isBefore, differenceInMinutes } from "date-fns";
+import { parse, isBefore, differenceInMinutes, addMinutes } from "date-fns";
 import { useVirtualNow } from "@/hooks/useVirtualNow";
 
 const BOOKINGS_LS_KEY = "bookings_list_lovable";
@@ -32,6 +33,42 @@ function getBookingStartDateTime(booking: { date: string, time: string }) {
   // ⚠️ Новый способ извлечь время начала (например: "14:00 - 18:00" → "14:00")
   const timeStart = booking.time?.split("-")[0]?.trim() || "00:00";
   const [hour, minute] = timeStart.split(":").map(Number);
+
+  if (
+    isNaN(year) || isNaN(month) || isNaN(day) ||
+    isNaN(hour) || isNaN(minute)
+  ) {
+    return new Date(NaN);
+  }
+
+  return new Date(year, month - 1, day, hour, minute);
+}
+
+// Новая функция: определяет дату и время окончания бронирования по booking
+function getBookingEndDateTime(booking: { date: string; time: string }) {
+  let day: number, month: number, year: number;
+
+  if (booking.date.includes(".")) {
+    // формат дд.мм.гггг
+    const parts = booking.date.split(".");
+    if (parts.length !== 3) return new Date(NaN);
+    [day, month, year] = parts.map(Number);
+  } else if (booking.date.includes("-")) {
+    // формат гггг-мм-дд
+    const parts = booking.date.split("-");
+    if (parts.length !== 3) return new Date(NaN);
+    [year, month, day] = parts.map(Number);
+  } else {
+    return new Date(NaN);
+  }
+
+  // Например: "14:00 - 18:00" → "18:00"
+  let timeEnd = booking.time?.split("-")[1]?.trim();
+  if (!timeEnd) {
+    // Если нет второго времени, используем start
+    timeEnd = booking.time?.split("-")[0]?.trim() || "00:00";
+  }
+  const [hour, minute] = timeEnd.split(":").map(Number);
 
   if (
     isNaN(year) || isNaN(month) || isNaN(day) ||
@@ -177,6 +214,9 @@ const Bookings = () => {
   const [bookings, setBookings] = useState<any[]>([]);
   const { toast } = useToast();
 
+  // Получаем виртуальное время
+  const virtualNow = useVirtualNow();
+
   // Функция получения массива броней из localStorage
   function initialLoad() {
     try {
@@ -187,6 +227,32 @@ const Bookings = () => {
       return [];
     }
   }
+
+  // Авто-обновление статуса "active" → "completed" по виртуальному времени
+  useEffect(() => {
+    // Для всех активных броней сравниваем конец бронирования с виртуальным временем
+    const updated = bookings.map((b) => {
+      if (b.status !== "active") return b;
+      const bookingEnd = getBookingEndDateTime(b);
+      if (isNaN(bookingEnd.getTime())) return b; // некорректная дата, не трогаем
+      // Если сейчас даже больше или равно концу бронь → completed
+      if (virtualNow >= bookingEnd) {
+        return { ...b, status: "completed" };
+      }
+      return b;
+    });
+
+    // Если хоть один статус изменился, обновляем LS и state (сравнение по ссылке)
+    const changed =
+      bookings.length === updated.length &&
+      bookings.some((b, i) => b.status !== updated[i].status);
+
+    if (changed) {
+      setBookings(updated);
+      localStorage.setItem(BOOKINGS_LS_KEY, JSON.stringify(updated));
+    }
+    // eslint-disable-next-line
+  }, [virtualNow, bookings]);
 
   useEffect(() => {
     setBookings(initialLoad());
@@ -240,3 +306,4 @@ const Bookings = () => {
 };
 
 export default Bookings;
+
