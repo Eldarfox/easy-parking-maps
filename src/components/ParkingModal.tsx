@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Parking } from "@/data/parkings";
@@ -69,7 +68,7 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
   const [selectedSpace, setSelectedSpace] = useState<string>("");
   const [allBookings, setAllBookings] = React.useState<BookingItem[]>([]);
 
-  // nightHoursArr, disabledHours, unavailableSpaces, allSpaces
+  // Подготовим ночные часы для ночного тарифа: массив по ночным часам парковки
   const nightHoursArr = React.useMemo(() => {
     if (tariff === "night" && parking?.nightHours) {
       const { from, to } = parking.nightHours;
@@ -86,7 +85,6 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
       return hours;
     }
     return [];
-  // делаем так, чтобы хук срабатывал всегда, даже если parking не передан (safe for hooks)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tariff, parking?.nightHours]);
 
@@ -278,6 +276,7 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
                   onChange={setSelectedTimeRange}
                   disabledHours={disabledHours}
                   hours={tariff === "night" && nightHoursArr.length > 0 ? nightHoursArr : undefined}
+                  nightMode={tariff === "night"}
                 />
               </div>
             )}
@@ -347,4 +346,3 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
 };
 
 export default ParkingModal;
-
