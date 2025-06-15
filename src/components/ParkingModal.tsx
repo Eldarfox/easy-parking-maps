@@ -211,19 +211,24 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
           </div>
           <div className="mb-4 flex gap-4 max-sm:flex-col">
             {/* Выбор даты */}
-            <div className={`flex-1 ${tariff === "daily" ? "min-w-0" : ""}`}>
+            <div className={`flex-1 min-w-0 flex flex-col`}>
               <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
                 <CalendarIcon className="w-4 h-4" />
                 Дата
               </div>
-              {/* Для дневного тарифа увеличиваем календарь */}
-              <div className={tariff === "daily" ? "w-full flex-1" : ""}>
+              {/* Показываем время сверху при дневном тарифе */}
+              {tariff === "daily" && (
+                <div className="text-sm text-gray-600 font-medium mb-2">
+                  Время: <span className="font-semibold">08:00 - 23:00</span>
+                </div>
+              )}
+              <div className="flex-1">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   fromDate={new Date()}
-                  className={`p-3 pointer-events-auto border rounded-md ${tariff === "daily" ? "w-full h-[320px] max-w-full" : ""}`}
+                  className={`p-3 pointer-events-auto border rounded-md w-full ${tariff === "daily" ? "h-[320px] max-w-full" : ""}`}
                   locale={ru}
                 />
               </div>
@@ -240,13 +245,6 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
                   onChange={setSelectedTimeRange}
                   disabledHours={disabledHours}
                 />
-              </div>
-            )}
-            {tariff === "daily" && (
-              <div className="flex-1 flex flex-col justify-end">
-                <div className="text-sm text-gray-600 mt-8 font-medium">
-                  Время: <span className="font-semibold">08:00 - 23:00</span>
-                </div>
               </div>
             )}
           </div>
