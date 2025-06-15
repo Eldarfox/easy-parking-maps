@@ -1,5 +1,5 @@
 
-import { CreditCard, Plus, Wallet as WalletIcon, History } from "lucide-react";
+import { CreditCard, Plus, Wallet as WalletIcon, History, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -19,7 +19,7 @@ import LinkCardModal from "@/components/LinkCardModal";
 const quickTopUps = [500, 1000, 2000, 5000];
 
 const Wallet = () => {
-  const [balance, setBalance] = useState(0);
+  const [balance, setBalance] = useState(2450);
   const [cardLinked, setCardLinked] = useState(false);
 
   const [cardNum, setCardNum] = useState("");
@@ -64,6 +64,13 @@ const Wallet = () => {
     }
   };
 
+  const handleTransactionHistory = () => {
+    toast({
+      title: "Скоро появится",
+      description: "История транзакций будет доступна в ближайшем обновлении.",
+    });
+  };
+
   const handleUnlinkCard = () => {
     setUnlinkDialogOpen(true);
   };
@@ -104,53 +111,32 @@ const Wallet = () => {
     });
   };
 
-  const handleTransactionHistory = () => {
-    toast({
-      title: "Скоро появится",
-      description: "История транзакций будет доступна в ближайшем обновлении.",
-    });
-  };
-
   return (
-    <div className="max-w-md mx-auto flex flex-col gap-6 pt-8 px-2 pb-32">
-      <h1 className="text-2xl font-bold">Мой кошелек</h1>
+    <div className="max-w-md mx-auto flex flex-col gap-7 pt-8 px-2 pb-32">
+      {/* Заголовок и подзаголовок */}
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-black/90">Кошелек</h1>
+        <div className="text-base text-gray-500 font-medium mt-1">Управляйте своими финансами</div>
+      </div>
 
-      {/* Доступный баланс */}
-      <div className="rounded-2xl p-5 pb-6 shadow-xl relative overflow-hidden flex flex-col gap-4 bg-white">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2 text-gray-700 font-semibold text-lg">
-            <CreditCard size={22} className="opacity-80" />
-            Доступный баланс
-          </div>
-          <WalletIcon className="text-gray-400 opacity-70" size={22} />
+      {/* Баланс с градиентом */}
+      <div className="wallet-card-gradient">
+        <div className="flex items-center justify-between">
+          <span className="wallet-balance-label">
+            <CreditCard size={22} className="opacity-90" /> Баланс
+          </span>
+          <WalletIcon className="opacity-70" size={22} />
         </div>
-        <div className="text-4xl font-bold text-black leading-snug">
-          {balance.toLocaleString()}{" "}
-          <span className="text-3xl font-semibold">сом</span>
-        </div>
-        {/* Новая строка кнопок: пополнить, добавить карту, история транзакций */}
-        <div className="flex flex-col xs:flex-row gap-2 mt-3">
-          <Button
-            variant="secondary"
-            className="bg-white/80 hover:bg-white text-violet-700 font-bold flex items-center gap-2 flex-1"
-            onClick={handleCustomTopUp}
-          >
-            <Plus size={18} /> Пополнить
-          </Button>
-          <Button
-            variant="outline"
-            className="flex items-center gap-2 flex-1"
-            onClick={() => setLinkCardModalOpen(true)}
-          >
-            <CreditCard size={18} /> Добавить карту
-          </Button>
-          <Button
-            variant="outline"
-            className="flex items-center gap-2 flex-1"
-            onClick={handleTransactionHistory}
-          >
-            <History size={18} /> История транзакций
-          </Button>
+        <div className="wallet-balance-value">{balance.toLocaleString()} <span className="wallet-balance-currency">₽</span></div>
+        <div className="text-base text-white/70 mb-1">Доступно для использования</div>
+
+        <div className="flex gap-3 mt-2">
+          <button className="btn-wallet-gradient flex items-center gap-2 flex-1" onClick={handleCustomTopUp}>
+            <Plus size={20} /> Пополнить
+          </button>
+          <button className="btn-wallet-outline flex items-center gap-2 flex-1" onClick={handleTransactionHistory}>
+            <ArrowRight size={20} /> Перевести
+          </button>
         </div>
       </div>
 
@@ -162,7 +148,8 @@ const Wallet = () => {
       />
 
       {/* Банковская карта */}
-      <div className="flex justify-center items-center mt-2">
+      <div className="hidden">
+        {/* Оставим скрытым: CardSection для отладки */}
         <CardSection
           cardLinked={cardLinked}
           cardNum={cardNum}
@@ -192,29 +179,29 @@ const Wallet = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Партнёрский баннер — отдельный блок */}
-      <div className="bg-yellow-100 rounded-2xl shadow-xl px-4 py-4">
-        <PartnerBanner />
-      </div>
-
       {/* Быстрое пополнение */}
-      <div className="bg-white rounded-xl shadow-sm p-4 flex flex-col gap-4">
-        <div className="font-bold text-lg">Быстрое пополнение</div>
-        <div className="grid grid-cols-2 gap-3">
+      <div className="quick-topup-card">
+        <div className="font-bold text-lg text-black/80">Быстрое пополнение</div>
+        <div className="grid grid-cols-2 gap-3 mt-1.5">
           {quickTopUps.map((amount) => (
-            <Button
+            <button
               key={amount}
-              variant="outline"
-              className="text-lg font-semibold py-4"
+              className="quick-topup-btn"
               onClick={() => handleQuickTopUp(amount)}
             >
-              {amount.toLocaleString()} <span className="ml-1 text-base">сом</span>
-            </Button>
+              {amount.toLocaleString()} <span className="ml-1 text-base">₽</span>
+            </button>
           ))}
         </div>
+      </div>
+
+      {/* Partner banner */}
+      <div className="bg-blue-50 rounded-2xl shadow px-4 py-4">
+        <PartnerBanner />
       </div>
     </div>
   );
 };
 
 export default Wallet;
+

@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -65,6 +64,7 @@ export default {
         },
         // Новые насыщенные цвета для градиентов
         violet: {
+          300: '#c6aafd',
           400: '#A78BFA',
           500: '#8B5CF6',
           600: '#7C3AED',
@@ -76,10 +76,8 @@ export default {
           500: '#0EA5E9',
           600: '#0369A1',
         },
-        indigo: {
-          400: '#818CF8',
-          500: '#6366F1',
-        }
+        gradientStart: '#8B5CF6',
+        gradientEnd: '#38BDF8',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -93,6 +91,7 @@ export default {
           'linear-gradient(90deg, #38BDF8 0%, #8B5CF6 100%)',
         'gradient-radial':
           'radial-gradient(circle at 60% 20%, #A78BFA 20%, #38BDF8 80%)',
+        'wallet-gradient': 'linear-gradient(120deg, #8B5CF6 0%, #38BDF8 100%)',
       },
       keyframes: {
         'accordion-down': {

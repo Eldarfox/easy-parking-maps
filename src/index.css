@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -128,3 +127,35 @@
 }
 
 /* Пусть utility-классы будут вовсе без !important — их можно миксовать с Tailwind */
+
+/* Стили для wallet gradient */
+@layer components {
+  .wallet-card-gradient {
+    @apply bg-wallet-gradient shadow-xl rounded-2xl px-6 py-6 text-white relative overflow-hidden flex flex-col gap-4;
+  }
+  .btn-wallet-gradient {
+    background: linear-gradient(90deg,#a084fa 0%,#38bdf8 100%);
+    color: #fff;
+    @apply font-bold px-6 py-2 rounded-xl shadow-md text-base transition hover:brightness-105;
+    border: none;
+  }
+  .btn-wallet-outline {
+    @apply bg-white/20 border border-white/30 text-white font-bold px-6 py-2 rounded-xl text-base transition hover:bg-white/40 hover:text-violet-700;
+    backdrop-filter: blur(8px);
+  }
+  .quick-topup-card {
+    @apply bg-white rounded-2xl shadow-md p-4 flex flex-col gap-3;
+  }
+  .quick-topup-btn {
+    @apply bg-gradient-to-br from-blue-100 via-violet-100 to-blue-50 text-blue-700 font-semibold rounded-lg py-4 text-lg border border-transparent transition hover:from-blue-200 hover:to-violet-200;
+  }
+  .wallet-balance-label {
+    @apply flex items-center gap-2 font-semibold text-lg text-white/90;
+  }
+  .wallet-balance-currency {
+    @apply text-2xl font-semibold text-white/90;
+  }
+  .wallet-balance-value {
+    @apply text-4xl font-extrabold text-white drop-shadow-sm tracking-tight leading-snug mb-1;
+  }
+}
