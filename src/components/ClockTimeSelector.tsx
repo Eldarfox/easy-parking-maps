@@ -223,16 +223,8 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
         })}
       </svg>
       <div className="mt-2 text-sm">
-        {/* Корректное отображение диапазона и пояснение "через полночь" */}
         {showInterval
-          ? (() => {
-              const order = displayedHours.indexOf(start!) > displayedHours.indexOf(end!) 
-                ? " (через полночь)"
-                : "";
-              // +1 – чтобы включить финальный час как выделенный диапазон (например, 2–4 => 2:00–5:00)
-              const nextHour = (end! + 1) % 24;
-              return `${getLabel(start!)} - ${getLabel(nextHour)}${order}`;
-            })()
+          ? `${getLabel(start!)} - ${getLabel(end!)}`
           : selection[0] !== null
           ? `Начало: ${getLabel(selection[0]!)}`
           : "Выберите время"}
