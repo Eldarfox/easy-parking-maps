@@ -12,11 +12,32 @@ const BISHKEK_TIMEZONE_OFFSET = 6 * 60; // Минуты UTC+6
 
 // Унифицированная функция: получает локальное время начала брони
 function getBookingStartDateTime(booking: { date: string, time: string }) {
-  const [day, month, year] = booking.date.includes(".")
-    ? booking.date.split(".").map(Number)
-    : booking.date.split("-").reverse().map(Number);
+  let day: number, month: number, year: number;
 
-  const [hour, minute = 0] = booking.time.split(":").map(Number);
+  if (booking.date.includes(".")) {
+    // формат дд.мм.гггг
+    const parts = booking.date.split(".");
+    if (parts.length !== 3) return new Date(NaN);
+    [day, month, year] = parts.map(Number);
+  } else if (booking.date.includes("-")) {
+    // формат гггг-мм-дд
+    const parts = booking.date.split("-");
+    if (parts.length !== 3) return new Date(NaN);
+    [year, month, day] = parts.map(Number);
+  } else {
+    return new Date(NaN);
+  }
+
+  const [hour, minute = 0] = (booking.time || "0:0").split(":").map(Number);
+
+  // Проверка year, month, day
+  if (
+    isNaN(year) || isNaN(month) || isNaN(day) ||
+    isNaN(hour) || isNaN(minute)
+  ) {
+    return new Date(NaN);
+  }
+
   return new Date(year, month - 1, day, hour, minute);
 }
 
@@ -63,22 +84,40 @@ function BookingCard({
   const isActive = booking.status === "active";
   let showCancel = false;
 
+  // ----- DEBUG вывод для отслеживания ситуации -----
+  // Покажем, что получено на входе:
+  console.log(
+    `[DEBUG] booking.date: ${booking.date}, booking.time: ${booking.time}`
+  );
+
   if (isActive) {
     const now = new Date();
     const bookingStart = getBookingStartDateTime(booking);
 
-    // Новая логика: показывать, если до старта осталось больше 2 часов (120 минут)
-    const isFuture = isBefore(now, bookingStart);
-    const minutesLeft = differenceInMinutes(bookingStart, now);
-    showCancel = isFuture && minutesLeft >= 120;
-
-    // Для отладки:
+    // Показываем тип и значение расчёта даты
     console.log(
-      `Сейчас: ${now.toLocaleString()} | ` +
-      `Начало брони: ${bookingStart.toLocaleString()} | ` +
-      `Минут до начала: ${minutesLeft} | ` +
-      `Можно отменить: ${showCancel}`
+      `[DEBUG] bookingStart type: ${typeof bookingStart}, toString: ${bookingStart.toString()}`
     );
+
+    // Новая логика: показывать, если до старта осталось больше 2 часов (120 минут)
+    if (!isNaN(bookingStart.getTime())) {
+      const isFuture = isBefore(now, bookingStart);
+      const minutesLeft = differenceInMinutes(bookingStart, now);
+      showCancel = isFuture && minutesLeft >= 120;
+
+      // Для отладки:
+      console.log(
+        `Сейчас: ${now.toLocaleString()} | ` +
+        `Начало брони: ${bookingStart.toLocaleString()} | ` +
+        `Минут до начала: ${minutesLeft} | ` +
+        `Можно отменить: ${showCancel}`
+      );
+    } else {
+      // Если дата некорректна
+      console.warn(
+        `[WARN] Некорректная дата/время для booking.id=${booking.id}. Проверьте формат!`
+      );
+    }
   }
 
   return (
