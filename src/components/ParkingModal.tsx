@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Parking } from "@/data/parkings";
@@ -60,6 +61,7 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
   parking,
   tariff,
 }) => {
+  // ---------------- ALL HOOKS MUST GO HERE, OUTSIDE ANY CONDITION -----------------
   const { toast } = useToast();
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -67,7 +69,7 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
   const [selectedSpace, setSelectedSpace] = useState<string>("");
   const [allBookings, setAllBookings] = React.useState<BookingItem[]>([]);
 
-  // ВСЕ ХУКИ ЗДЕСЬ!
+  // nightHoursArr, disabledHours, unavailableSpaces, allSpaces
   const nightHoursArr = React.useMemo(() => {
     if (tariff === "night" && parking?.nightHours) {
       const { from, to } = parking.nightHours;
@@ -84,7 +86,9 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
       return hours;
     }
     return [];
-  }, [tariff, parking]);
+  // делаем так, чтобы хук срабатывал всегда, даже если parking не передан (safe for hooks)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tariff, parking?.nightHours]);
 
   const disabledHours = React.useMemo(() => {
     if (!parking || !selectedDate || !selectedSpace) return [];
@@ -161,9 +165,6 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
     }
   }, [open, parking, tariff]);
 
-  // ХУКИ ВСЕГДА ВЫШЕ ЛЮБЫХ RETURN
-  if (!parking) return null;
-
   const nightLabel = React.useMemo(() => {
     if (tariff === "night" && parking?.nightHours) {
       const { from, to } = parking.nightHours;
@@ -196,7 +197,7 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
         : getTimeStr();
 
     const booking = {
-      ...mapParkingToBooking(parking, selectedDate, timeStr, parseInt(selectedSpace, 10)),
+      ...mapParkingToBooking(parking!, selectedDate, timeStr, parseInt(selectedSpace, 10)),
       time: timeStr,
     };
 
@@ -205,12 +206,15 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
 
     toast({
       title: "Бронирование успешно!",
-      description: `Парковка "${parking.name}", место #${parseInt(selectedSpace, 10) + 1} на ${booking.date} в ${booking.time} успешно забронирована.`,
+      description: `Парковка "${parking!.name}", место #${parseInt(selectedSpace, 10) + 1} на ${booking.date} в ${booking.time} успешно забронирована.`,
       variant: "default",
     });
 
     onClose();
   };
+
+  // ----------- ONLY NOW WE CHECK PARKING AND RENDER (after all hooks called every render!) -----------
+  if (!parking) return null;
 
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
@@ -343,3 +347,4 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
 };
 
 export default ParkingModal;
+
