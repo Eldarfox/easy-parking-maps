@@ -1,4 +1,3 @@
-
 import { CreditCard, ArrowRight, Plus, Wallet as WalletIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
@@ -117,8 +116,8 @@ const Wallet = () => {
         </div>
       </div>
 
-      {/* Банковская карта — отдельный блок */}
-      <div className="bg-white rounded-2xl shadow-xl px-4 py-5">
+      {/* Банковская карта — теперь без отдельного белого контейнера! */}
+      <div className="flex justify-center items-center mt-2">
         <CardSection
           cardLinked={cardLinked}
           cardNum={cardNum}

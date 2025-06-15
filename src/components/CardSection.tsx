@@ -28,29 +28,25 @@ const CardSection: React.FC<CardSectionProps> = ({
   }
 
   return (
-    <div className="w-full flex justify-center relative">
-      <div className="w-full">
-        {/* Крестик в правом верхнем углу */}
-        {onUnlinkCard && (
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            aria-label="Отвязать карту"
-            className="absolute -right-2 -top-2 z-20 rounded-full p-1 bg-white shadow hover:bg-red-50 border border-gray-200"
-            onClick={onUnlinkCard}
-          >
-            <X className="text-red-500" size={20} />
-          </Button>
-        )}
-        <CardVisualization
-          cardNumber={cardNum}
-          holder={cardHolder}
-          exp={cardExp}
-          background="orange"
-          scheme="visa"
-        />
-      </div>
+    <div className="relative w-full flex justify-center">
+      {/* Крест — теперь просто серый, без подложки */}
+      {onUnlinkCard && (
+        <button
+          type="button"
+          aria-label="Отвязать карту"
+          className="absolute right-0 -top-3 z-20 p-0 m-0 border-none bg-transparent hover:text-gray-500 transition-colors"
+          onClick={onUnlinkCard}
+        >
+          <X className="text-gray-400" size={22} />
+        </button>
+      )}
+      <CardVisualization
+        cardNumber={cardNum}
+        holder={cardHolder}
+        exp={cardExp}
+        background="gradient"
+        scheme="visa"
+      />
     </div>
   );
 };
