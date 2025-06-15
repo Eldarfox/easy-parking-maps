@@ -17,14 +17,14 @@ const CardSection: React.FC<CardSectionProps> = ({
 }) => {
   if (!cardLinked) {
     return (
-      <div className="w-full rounded-xl border border-dashed border-gray-300 flex flex-col items-center justify-center p-6 mb-4 bg-white/60">
+      <div className="w-full flex flex-col items-center justify-center py-6">
         <p className="text-gray-500 text-sm text-center">Банковская карта не привязана</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full flex justify-center my-2">
+    <div className="w-full flex justify-center">
       <div className="w-full">
         <CardVisualization
           cardNumber={cardNum}

@@ -3,9 +3,8 @@ import { CreditCard, ArrowRight, Plus, Wallet as WalletIcon } from "lucide-react
 import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import CardVisualization from "@/components/CardVisualization";
-import PartnerBanner from "@/components/PartnerBanner";
 import CardSection from "@/components/CardSection";
+import PartnerBanner from "@/components/PartnerBanner";
 
 const quickTopUps = [500, 1000, 2000, 5000];
 
@@ -61,7 +60,7 @@ const Wallet = () => {
   return (
     <div className="max-w-md mx-auto flex flex-col gap-6 pt-8 px-2 pb-32">
       <h1 className="text-2xl font-bold">Мой кошелек</h1>
-      {/* Баланс карточка */}
+      {/* Блок "Доступный баланс" */}
       <div className="rounded-2xl p-5 pb-6 shadow-xl relative overflow-hidden flex flex-col gap-3 bg-white">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2 text-gray-700 font-semibold text-lg">
@@ -89,18 +88,19 @@ const Wallet = () => {
           </Button>
         </div>
       </div>
-
-      {/* Банковская карта отдельно */}
-      <CardSection
-        cardLinked={cardLinked}
-        cardNum={cardNum}
-        cardHolder={cardHolder}
-        cardExp={cardExp}
-      />
-
-      {/* Баннер партнёров отдельно */}
-      <PartnerBanner />
-
+      {/* Банковская карта - отдельный блок */}
+      <div className="bg-white rounded-2xl shadow-xl px-4 py-5 mt-2">
+        <CardSection
+          cardLinked={cardLinked}
+          cardNum={cardNum}
+          cardHolder={cardHolder}
+          cardExp={cardExp}
+        />
+      </div>
+      {/* Баннер партнёров - отдельный блок */}
+      <div className="bg-yellow-100 rounded-2xl shadow-xl px-4 py-4 mt-2">
+        <PartnerBanner />
+      </div>
       {/* Быстрое пополнение */}
       <div className="bg-white rounded-xl shadow-sm p-4 flex flex-col gap-4">
         <div className="font-bold text-lg">Быстрое пополнение</div>
