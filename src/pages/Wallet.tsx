@@ -1,14 +1,21 @@
 
 import { CreditCard, ArrowRight, Plus, Wallet as WalletIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
 const quickTopUps = [500, 1000, 2000, 5000];
 
 const Wallet = () => {
   const [balance, setBalance] = useState(0);
+  const [cardLinked, setCardLinked] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Определяем привязана ли карта
+    const isLinked = localStorage.getItem("cabinet_card") === "linked";
+    setCardLinked(isLinked);
+  }, []);
 
   // Функция для пополнения баланса на указанную сумму
   const handleTopUp = (amount: number) => {
@@ -17,17 +24,26 @@ const Wallet = () => {
 
   // Открыть модалку или форму для произвольного пополнения, пример простого пополнения на 1000
   const handleCustomTopUp = () => {
+    if (!cardLinked) {
+      toast({
+        title: "Привяжите карту",
+        description: "Для пополнения необходимо привязать карту.",
+      });
+      return;
+    }
     handleTopUp(1000);
   };
 
-  // Обработчик быстрого пополнения с уведомлением
+  // Обработчик быстрого пополнения с учетом состояния карты
   const handleQuickTopUp = (amount: number) => {
-    toast({
-      title: "Привяжите карту",
-      description: "Для быстрого пополнения необходимо привязать карту."
-    });
-    // Если нужно одновременно пополнять баланс, то раскомментировать следующую строку:
-    // handleTopUp(amount);
+    if (cardLinked) {
+      handleTopUp(amount);
+    } else {
+      toast({
+        title: "Привяжите карту",
+        description: "Для быстрого пополнения необходимо привязать карту.",
+      });
+    }
   };
 
   return (
@@ -64,6 +80,7 @@ const Wallet = () => {
           <Button
             variant="ghost"
             className="bg-white/20 hover:bg-white/40 text-white font-bold flex items-center gap-2 flex-1 border-none"
+            // Здесь можно реализовать функционал перевода при необходимости
           >
             <ArrowRight size={18} /> Перевести
           </Button>
@@ -90,4 +107,3 @@ const Wallet = () => {
 };
 
 export default Wallet;
-
