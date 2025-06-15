@@ -203,7 +203,7 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
     return { time: timeStr, toDate };
   };
 
-  // --- Новый: получение и обновление баланса кошелька ---
+  // --- Новое: получение и обновление баланса кошелька ---
   function getWalletBalance() {
     return parseInt(localStorage.getItem("cabinet_wallet_balance") || "2450");
   }
@@ -215,41 +215,43 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
     );
   }
 
+  // --- Добавим функцию точного рассчёта summary для брони ---
+  function calculateBookingSummary(parking, tariff, selectedTimeRange) {
+    if (!parking || !parking.prices) return 0;
+    if (tariff === "hourly" && selectedTimeRange) {
+      const [start, end] = selectedTimeRange;
+      let hours = end - start;
+      if (hours <= 0) hours += 24; // учёт перехода через полночь
+      const hourly = parking.prices.find((p) => p.type?.toLowerCase().includes("час"));
+      return hours * (hourly?.price || 0);
+    }
+    if (tariff === "daily") {
+      const daily = parking.prices.find((p) => p.type?.toLowerCase().includes("день"));
+      return daily?.price || 0;
+    }
+    if (tariff === "night") {
+      const night = parking.prices.find((p) => p.type?.toLowerCase().includes("ночь"));
+      return night?.price || 0;
+    }
+    return parking.prices[0]?.price || 0;
+  }
+
   const handleBooking = () => {
     if (!selectedDate || (!selectedTimeRange && tariff !== "daily") || selectedSpace === "") return;
 
-    let bookingPrice: number = 0;
-    if (parking && parking.prices && Array.isArray(parking.prices)) {
-      if (tariff === "hourly" && selectedTimeRange) {
-        // Почасовой тариф: вычисляем полную сумму с учетом перехода через полночь
-        const [start, end] = selectedTimeRange;
-        let hours = end - start;
-        if (hours <= 0) hours += 24;
-        bookingPrice = (parking.prices.find(p => p.type.toLowerCase().includes("час"))?.price || 0) * hours;
-      } else if (tariff === "daily") {
-        const dailyPrice = parking.prices.find((p) => p.type.toLowerCase().includes("день"))?.price || 0;
-        bookingPrice = dailyPrice;
-      } else if (tariff === "night") {
-        const nightPrice = parking.prices.find((p) => p.type.toLowerCase().includes("ночь"))?.price || 0;
-        bookingPrice = nightPrice;
-      } else {
-        bookingPrice = parking.prices[0]?.price || 0;
-      }
-    }
+    const summary = calculateBookingSummary(parking, tariff, selectedTimeRange);
 
-    // Проверяем хватает ли денег
     const currentBalance = getWalletBalance();
-    if (currentBalance < bookingPrice) {
+    if (currentBalance < summary) {
       toast({
         title: "Недостаточно средств",
-        description: `На вашем балансе недостаточно средств для бронирования (${bookingPrice}⃀). Пополните кошелек.`,
+        description: `На вашем балансе недостаточно средств для бронирования (${summary}⃀). Пополните кошелек.`,
         variant: "destructive",
       });
       return;
     }
 
-    // Списываем стоимость
-    setWalletBalance(currentBalance - bookingPrice);
+    setWalletBalance(currentBalance - summary);
 
     const arrRaw = localStorage.getItem(BOOKINGS_LS_KEY);
     let arr = [];
@@ -273,10 +275,9 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
       timeStr = getTimeStr();
     }
 
-    // Для ночной брони: диапазон дат (текущий и +1 день, если нужно)
     const booking = tariff === "night"
-      ? mapParkingToBooking(parking!, selectedDate, toDate, timeStr, parseInt(selectedSpace, 10))
-      : mapParkingToBooking(parking!, selectedDate, undefined, timeStr, parseInt(selectedSpace, 10));
+      ? { ...mapParkingToBooking(parking!, selectedDate, toDate, timeStr, parseInt(selectedSpace, 10)), price: summary }
+      : { ...mapParkingToBooking(parking!, selectedDate, undefined, timeStr, parseInt(selectedSpace, 10)), price: summary };
 
     arr.unshift(booking);
     localStorage.setItem(BOOKINGS_LS_KEY, JSON.stringify(arr));
