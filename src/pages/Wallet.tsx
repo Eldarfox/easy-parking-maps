@@ -1,7 +1,8 @@
-import { CreditCard, ArrowRight, Plus, Wallet as WalletIcon } from "lucide-react";
+
+import { CreditCard, Plus, Wallet as WalletIcon, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import CardSection from "@/components/CardSection";
 import PartnerBanner from "@/components/PartnerBanner";
 import {
@@ -13,6 +14,7 @@ import {
   DialogDescription,
   DialogClose,
 } from "@/components/ui/dialog";
+import LinkCardModal from "@/components/LinkCardModal";
 
 const quickTopUps = [500, 1000, 2000, 5000];
 
@@ -26,6 +28,7 @@ const Wallet = () => {
   const { toast } = useToast();
 
   const [unlinkDialogOpen, setUnlinkDialogOpen] = useState(false);
+  const [linkCardModalOpen, setLinkCardModalOpen] = useState(false);
 
   useEffect(() => {
     const isLinked = localStorage.getItem("cabinet_card") === "linked";
@@ -82,12 +85,38 @@ const Wallet = () => {
     });
   };
 
+  // Функция для обработки успеха привязки карты
+  const handleLinkCardSuccess = (data: { cardNumber: string; holder: string; exp: string }) => {
+    setCardLinked(true);
+    setCardNum(data.cardNumber);
+    setCardHolder(data.holder);
+    setCardExp(data.exp);
+
+    localStorage.setItem("cabinet_card", "linked");
+    localStorage.setItem("cabinet_card_number", data.cardNumber);
+    localStorage.setItem("cabinet_card_holder", data.holder);
+    localStorage.setItem("cabinet_card_exp", data.exp);
+
+    toast({
+      title: "Карта привязана",
+      description: "Банковская карта успешно привязана.",
+      duration: 2000,
+    });
+  };
+
+  const handleTransactionHistory = () => {
+    toast({
+      title: "Скоро появится",
+      description: "История транзакций будет доступна в ближайшем обновлении.",
+    });
+  };
+
   return (
     <div className="max-w-md mx-auto flex flex-col gap-6 pt-8 px-2 pb-32">
       <h1 className="text-2xl font-bold">Мой кошелек</h1>
 
       {/* Доступный баланс */}
-      <div className="rounded-2xl p-5 pb-6 shadow-xl relative overflow-hidden flex flex-col gap-3 bg-white">
+      <div className="rounded-2xl p-5 pb-6 shadow-xl relative overflow-hidden flex flex-col gap-4 bg-white">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2 text-gray-700 font-semibold text-lg">
             <CreditCard size={22} className="opacity-80" />
@@ -99,7 +128,8 @@ const Wallet = () => {
           {balance.toLocaleString()}{" "}
           <span className="text-3xl font-semibold">сом</span>
         </div>
-        <div className="flex gap-3 mt-2 flex-col xs:flex-row">
+        {/* Новая строка кнопок: пополнить, добавить карту, история транзакций */}
+        <div className="flex flex-col xs:flex-row gap-2 mt-3">
           <Button
             variant="secondary"
             className="bg-white/80 hover:bg-white text-violet-700 font-bold flex items-center gap-2 flex-1"
@@ -107,10 +137,31 @@ const Wallet = () => {
           >
             <Plus size={18} /> Пополнить
           </Button>
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 flex-1"
+            onClick={() => setLinkCardModalOpen(true)}
+          >
+            <CreditCard size={18} /> Добавить карту
+          </Button>
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 flex-1"
+            onClick={handleTransactionHistory}
+          >
+            <History size={18} /> История транзакций
+          </Button>
         </div>
       </div>
 
-      {/* Банковская карта — теперь без отдельного белого контейнера! */}
+      {/* Модалка привязки карты */}
+      <LinkCardModal
+        open={linkCardModalOpen}
+        onOpenChange={setLinkCardModalOpen}
+        onSuccess={handleLinkCardSuccess}
+      />
+
+      {/* Банковская карта */}
       <div className="flex justify-center items-center mt-2">
         <CardSection
           cardLinked={cardLinked}
