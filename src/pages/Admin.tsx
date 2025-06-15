@@ -4,7 +4,7 @@ import ClockField from "@/components/ClockField";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { User } from "lucide-react";
+import { User, Trash2 } from "lucide-react";
 
 const TIME_KEY = "cabinet_sim_time";
 
@@ -39,6 +39,19 @@ const Admin = () => {
     toast({ title: "Время обновлено", description: "Новое время сохранено", duration: 2000 });
   }
 
+  // Новый обработчик для полного сброса localStorage
+  function handleResetAll() {
+    localStorage.clear();
+    toast({
+      title: "Все данные сброшены",
+      description: "Хранилище очищено полностью",
+      duration: 3000,
+      variant: "destructive"
+    });
+    // Можно сделать перезагрузку для сброса состояния, если требуется:
+    // window.location.reload();
+  }
+
   return (
     <div className="flex flex-col items-center pt-20 px-4 max-w-md mx-auto w-full">
       <Button
@@ -62,6 +75,16 @@ const Admin = () => {
           <p className="text-xs text-muted-foreground mt-1">
             Время «течёт» дальше, после изменения.
           </p>
+        </div>
+        <div>
+          <Button
+            onClick={handleResetAll}
+            variant="destructive"
+            className="w-full flex gap-2 items-center mt-3"
+          >
+            <Trash2 size={18} />
+            Сбросить всё (удалить localStorage)
+          </Button>
         </div>
       </div>
     </div>
