@@ -107,12 +107,6 @@ const Wallet = () => {
           >
             <Plus size={18} /> Пополнить
           </Button>
-          <Button
-            variant="ghost"
-            className="bg-white/20 hover:bg-white/40 text-violet-700 font-bold flex items-center gap-2 flex-1 border-none"
-          >
-            <ArrowRight size={18} /> Перевести
-          </Button>
         </div>
       </div>
 
