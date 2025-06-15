@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from "react";
 
 function pad(num: number, len = 2) {
@@ -61,7 +60,7 @@ const ClockField: React.FC<Props> = ({ value, onChange }) => {
     const val = e.target.value;
     if (/^\d{2}:\d{2}(:\d{2})?$/.test(val)) {
       onChange(val.length === 5 ? val + ":00" : val);
-      setRunning(true);
+      setRunning(false);
     }
   };
 
@@ -94,4 +93,3 @@ const ClockField: React.FC<Props> = ({ value, onChange }) => {
 };
 
 export default ClockField;
-
