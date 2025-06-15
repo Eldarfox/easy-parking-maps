@@ -2,24 +2,39 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Clock, CreditCard, User, LogIn } from "lucide-react";
+import { CreditCard, User, LogIn } from "lucide-react";
 
 // Вспомогательная функция для проверки авторизации
 function checkAuth() {
   return localStorage.getItem("auth_user") === "true";
 }
 
+// Хук для "живого" времени
+function useLiveTime() {
+  const [time, setTime] = useState(() => {
+    const now = new Date();
+    return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  });
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      setTime(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+  return time;
+}
+
 const Cabinet = () => {
   const [isAuth, setIsAuth] = useState(false);
   const [name, setName] = useState("");
-  const [arrivalTime, setArrivalTime] = useState("");
   const [cardLinked, setCardLinked] = useState(false);
+  const time = useLiveTime();
 
   // При монтировании получить статус авторизации и данные профиля
   useEffect(() => {
     setIsAuth(checkAuth());
     setName(localStorage.getItem("cabinet_name") || "");
-    setArrivalTime(localStorage.getItem("cabinet_arrival") || "");
     setCardLinked(localStorage.getItem("cabinet_card") === "linked");
   }, []);
 
@@ -40,7 +55,6 @@ const Cabinet = () => {
   // Сохранение профиля
   function saveProfileData() {
     localStorage.setItem("cabinet_name", name);
-    localStorage.setItem("cabinet_arrival", arrivalTime);
   }
 
   // "Привязать карту" (затычка)
@@ -87,13 +101,9 @@ const Cabinet = () => {
         </div>
         <div>
           <label className="block font-semibold mb-0.5 flex gap-1 items-center">
-            <Clock size={18} /> Время приезда
+            🕒 Текущее время
           </label>
-          <Input
-            type="time"
-            value={arrivalTime}
-            onChange={e => setArrivalTime(e.target.value)}
-          />
+          <div className="text-2xl font-mono py-2 select-none">{time}</div>
         </div>
         <div>
           <label className="block font-semibold mb-0.5 flex gap-1 items-center">
@@ -129,3 +139,4 @@ const Cabinet = () => {
 };
 
 export default Cabinet;
+
