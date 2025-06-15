@@ -3,42 +3,30 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CreditCard, User, LogIn } from "lucide-react";
+import ClockField from "@/components/ClockField";
 
 // Вспомогательная функция для проверки авторизации
 function checkAuth() {
   return localStorage.getItem("auth_user") === "true";
 }
 
-// Хук для "живого" времени
-function useLiveTime() {
-  const [time, setTime] = useState(() => {
-    const now = new Date();
-    return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  });
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      setTime(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-  return time;
-}
+const TIME_KEY = "cabinet_sim_time";
 
 const Cabinet = () => {
   const [isAuth, setIsAuth] = useState(false);
   const [name, setName] = useState("");
   const [cardLinked, setCardLinked] = useState(false);
-  const time = useLiveTime();
+  const [simTime, setSimTime] = useState(() => {
+    return localStorage.getItem(TIME_KEY) || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  });
 
-  // При монтировании получить статус авторизации и данные профиля
   useEffect(() => {
     setIsAuth(checkAuth());
     setName(localStorage.getItem("cabinet_name") || "");
     setCardLinked(localStorage.getItem("cabinet_card") === "linked");
+    setSimTime(localStorage.getItem(TIME_KEY) || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
   }, []);
 
-  // Моковые обработчики входа, регистрации, выхода
   function handleLogin() {
     localStorage.setItem("auth_user", "true");
     setIsAuth(true);
@@ -52,12 +40,16 @@ const Cabinet = () => {
     setIsAuth(false);
   }
 
-  // Сохранение профиля
   function saveProfileData() {
     localStorage.setItem("cabinet_name", name);
+    localStorage.setItem(TIME_KEY, simTime);
   }
 
-  // "Привязать карту" (затычка)
+  function handleSetTime(val: string) {
+    setSimTime(val);
+    localStorage.setItem(TIME_KEY, val);
+  }
+
   function handleLinkCard() {
     setCardLinked(true);
     localStorage.setItem("cabinet_card", "linked");
@@ -84,7 +76,6 @@ const Cabinet = () => {
     );
   }
 
-  // Если авторизован — профиль
   return (
     <div className="flex flex-col items-center pt-20 px-4 max-w-md mx-auto w-full">
       <h1 className="text-2xl font-bold mb-3 flex items-center gap-2 text-blue-700">
@@ -101,9 +92,12 @@ const Cabinet = () => {
         </div>
         <div>
           <label className="block font-semibold mb-0.5 flex gap-1 items-center">
-            🕒 Текущее время
+            🕒 Текущее время (можно менять)
           </label>
-          <div className="text-2xl font-mono py-2 select-none">{time}</div>
+          <ClockField value={simTime} onChange={handleSetTime} />
+          <p className="text-xs text-muted-foreground mt-1">
+            Время «течёт» дальше, после изменения.
+          </p>
         </div>
         <div>
           <label className="block font-semibold mb-0.5 flex gap-1 items-center">
@@ -139,4 +133,3 @@ const Cabinet = () => {
 };
 
 export default Cabinet;
-
