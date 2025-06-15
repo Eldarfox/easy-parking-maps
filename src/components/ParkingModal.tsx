@@ -203,8 +203,55 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
     return { time: timeStr, toDate };
   };
 
+  // --- Новый: получение и обновление баланса кошелька ---
+  function getWalletBalance() {
+    return parseInt(localStorage.getItem("cabinet_wallet_balance") || "2450");
+  }
+  function setWalletBalance(newValue: number) {
+    localStorage.setItem("cabinet_wallet_balance", String(newValue));
+    // Сообщить другим вкладкам
+    window.dispatchEvent(
+      new StorageEvent("storage", { key: "cabinet_wallet_balance", newValue: String(newValue) })
+    );
+  }
+
   const handleBooking = () => {
     if (!selectedDate || (!selectedTimeRange && tariff !== "daily") || selectedSpace === "") return;
+
+    // --- Новый блок: расчет цены бронирования (почасовой, дневной, ночной) ---
+    let bookingPrice: number = 0;
+    if (parking && parking.prices && Array.isArray(parking.prices)) {
+      if (tariff === "hourly" && selectedTimeRange) {
+        // ищем прайс за час (если есть), умножаем на количество часов
+        const hourlyPrice = parking.prices.find((p) => p.type.toLowerCase().includes("час"))?.price || 0;
+        const [start, end] = selectedTimeRange;
+        let hours = end - start + 1;
+        if (hours <= 0) hours += 24;
+        bookingPrice = hourlyPrice * hours;
+      } else if (tariff === "daily") {
+        // дневной тариф
+        bookingPrice = parking.prices.find((p) => p.type.toLowerCase().includes("день"))?.price || 0;
+      } else if (tariff === "night") {
+        // ночной тариф
+        bookingPrice = parking.prices.find((p) => p.type.toLowerCase().includes("ночь"))?.price || 0;
+      } else {
+        bookingPrice = parking.prices[0]?.price || 0;
+      }
+    }
+
+    // --- Проверяем хватает ли денег ---
+    const currentBalance = getWalletBalance();
+    if (currentBalance < bookingPrice) {
+      toast({
+        title: "Недостаточно средств",
+        description: `На вашем балансе недостаточно средств для бронирования (${bookingPrice}⃀). Пополните кошелек.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Списать стоимость
+    setWalletBalance(currentBalance - bookingPrice);
 
     const arrRaw = localStorage.getItem(BOOKINGS_LS_KEY);
     let arr = [];

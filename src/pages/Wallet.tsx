@@ -18,7 +18,10 @@ import LinkCardModal from "@/components/LinkCardModal";
 
 const quickTopUps = [500, 1000, 2000, 5000];
 
+const WALLET_BALANCE_KEY = "cabinet_wallet_balance";
+
 const Wallet = () => {
+  // --- баланс теперь синхронизирован с localStorage ---
   const [balance, setBalance] = useState(2450);
   const [cardLinked, setCardLinked] = useState(false);
 
@@ -32,16 +35,39 @@ const Wallet = () => {
 
   const [topupModalOpen, setTopupModalOpen] = useState(false);
 
+  // --- Хука для баланса ---
   useEffect(() => {
+    // баланс кошелька всегда берём из localStorage, или дефолт
+    const bal = localStorage.getItem(WALLET_BALANCE_KEY);
+    setBalance(bal ? parseInt(bal) : 2450);
+
     const isLinked = localStorage.getItem("cabinet_card") === "linked";
     setCardLinked(isLinked);
     setCardNum(localStorage.getItem("cabinet_card_number") || "");
     setCardHolder(localStorage.getItem("cabinet_card_holder") || "");
     setCardExp(localStorage.getItem("cabinet_card_exp") || "");
+
+    // подписываемся на внешние изменения баланса
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === WALLET_BALANCE_KEY) {
+        setBalance(e.newValue ? parseInt(e.newValue) : 0);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
+  // --- обновляем баланс в LS и стейте
+  const updateBalance = (fn: (old: number) => number) => {
+    setBalance((prev) => {
+      const next = fn(prev);
+      localStorage.setItem(WALLET_BALANCE_KEY, next.toString());
+      return next;
+    });
+  };
+
   const handleTopUp = (amount: number) => {
-    setBalance((prev) => prev + amount);
+    updateBalance((prev) => prev + amount);
   };
 
   const handleCustomTopUp = () => {
