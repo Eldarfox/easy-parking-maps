@@ -221,18 +221,15 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
     let bookingPrice: number = 0;
     if (parking && parking.prices && Array.isArray(parking.prices)) {
       if (tariff === "hourly" && selectedTimeRange) {
-        // Почасовой тариф
-        const hourlyPrice = parking.prices.find((p) => p.type.toLowerCase().includes("час"))?.price || 0;
+        // Почасовой тариф: вычисляем полную сумму с учетом перехода через полночь
         const [start, end] = selectedTimeRange;
-        let hours = end - start + 1;
+        let hours = end - start;
         if (hours <= 0) hours += 24;
-        bookingPrice = hourlyPrice * hours;
+        bookingPrice = (parking.prices.find(p => p.type.toLowerCase().includes("час"))?.price || 0) * hours;
       } else if (tariff === "daily") {
-        // Дневной тариф — просто одна фиксированная стоимость за день
         const dailyPrice = parking.prices.find((p) => p.type.toLowerCase().includes("день"))?.price || 0;
         bookingPrice = dailyPrice;
       } else if (tariff === "night") {
-        // Ночной тариф — просто одна фиксированная стоимость за ночь
         const nightPrice = parking.prices.find((p) => p.type.toLowerCase().includes("ночь"))?.price || 0;
         bookingPrice = nightPrice;
       } else {
