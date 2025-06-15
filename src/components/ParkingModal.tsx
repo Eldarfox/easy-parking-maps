@@ -211,7 +211,7 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
           </div>
           <div className="mb-4 flex gap-4 max-sm:flex-col">
             {/* Выбор даты */}
-            <div className={`flex-1 min-w-0 flex flex-col`}>
+            <div className={`flex-1 min-w-0 flex flex-col ${tariff === "daily" ? "h-[340px]" : ""}`}>
               <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
                 <CalendarIcon className="w-4 h-4" />
                 Дата
@@ -222,13 +222,13 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
                   Время: <span className="font-semibold">08:00 - 23:00</span>
                 </div>
               )}
-              <div className="flex-1">
+              <div className={`flex-1 min-h-0 w-full ${tariff === "daily" ? "" : ""}`}>
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   fromDate={new Date()}
-                  className={`p-3 pointer-events-auto border rounded-md w-full ${tariff === "daily" ? "h-[320px] max-w-full" : ""}`}
+                  className={`border rounded-md ${tariff === "daily" ? "flex-1 min-h-0 w-full h-full p-0" : "p-3"} pointer-events-auto`}
                   locale={ru}
                 />
               </div>
