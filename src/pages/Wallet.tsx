@@ -1,4 +1,3 @@
-
 import { CreditCard, Plus, Wallet as WalletIcon, History, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
@@ -129,7 +128,7 @@ const Wallet = () => {
         </div>
         <div className="wallet-balance-value">
           {balance.toLocaleString()}{" "}
-          <span className="wallet-balance-currency">сом</span>
+          <span className="wallet-balance-currency">⃀</span>
         </div>
         <div className="text-base text-white/70 mb-1">Доступно для использования</div>
 
@@ -191,7 +190,7 @@ const Wallet = () => {
               className="quick-topup-btn"
               onClick={() => handleQuickTopUp(amount)}
             >
-              {amount.toLocaleString()} <span className="ml-1 text-base">сом</span>
+              {amount.toLocaleString()} <span className="ml-1 text-base">⃀</span>
             </button>
           ))}
         </div>
