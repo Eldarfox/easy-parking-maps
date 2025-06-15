@@ -32,8 +32,16 @@ function BookingStatus({status}: {status: string}) {
 function getBookingStartDateTime(booking: {date: string, time: string}) {
   let dateString = booking.date;
   let timeString = booking.time;
-  let dateTimeString = `${dateString} ${timeString}`;
-  return parse(dateTimeString, "yyyy-MM-dd HH:mm", new Date());
+
+  // Поддержка dd.MM.yyyy
+  let day, month, year;
+  if (dateString.includes(".")) {
+    [day, month, year] = dateString.split(".").map(Number);
+  } else {
+    [year, month, day] = dateString.split("-").map(Number);
+  }
+  const [hour, minute = 0] = timeString.split(":").map(Number);
+  return new Date(year, month - 1, day, hour, minute);
 }
 
 function BookingCard({
