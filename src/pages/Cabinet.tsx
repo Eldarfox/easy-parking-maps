@@ -168,12 +168,9 @@ const Cabinet = () => {
             <CreditCard size={18} /> Банковская карта
           </label>
           {cardLinked ? (
-            <>
-              <CardVisualization cardNumber={cardNum} holder={cardHolder} exp={cardExp} />
-              <div className="flex items-center gap-2 text-green-700 font-medium">
-                Карта привязана
-              </div>
-            </>
+            <div className="flex items-center gap-2 text-green-700 font-medium">
+              Карта привязана
+            </div>
           ) : (
             <>
               <Button
