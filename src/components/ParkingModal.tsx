@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Parking } from "@/data/parkings";
@@ -140,7 +139,6 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
   // --- Новое: подгоняем тайм-рендж для "дневного" тарифа сразу
   React.useEffect(() => {
     if (tariff === "daily" && selectedDate && selectedSpace) {
-      // Дневной тариф: с 08 до 23 (8–22 включительно, т.е. 08:00-23:00)
       setSelectedTimeRange([8, 22]);
     }
   }, [tariff, selectedDate, selectedSpace]);
@@ -227,7 +225,7 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
                 locale={ru}
               />
             </div>
-            {/* Выбор времени — часы, скрываем для дневного тарифа */}
+            {/* Блок выбора времени полностью убираем для дневного тарифа */}
             {tariff !== "daily" && (
               <div className="flex-1">
                 <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
@@ -261,10 +259,8 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
               </SelectTrigger>
               <SelectContent>
                 {allSpaces.map((spaceNum) =>
-                  // Для дневного тарифа показываем занятость по всему интервалу 08-23
                   tariff === "daily"
                     ? (() => {
-                        // Проверяем, занят ли весь интервал для этого места thisDate
                         const thisDate =
                           selectedDate && format(selectedDate, "dd.MM.yyyy");
                         const isBusy = allBookings.some(
@@ -316,4 +312,3 @@ const ParkingModal: React.FC<{ open: boolean; onClose: () => void; parking: Park
 };
 
 export default ParkingModal;
-
