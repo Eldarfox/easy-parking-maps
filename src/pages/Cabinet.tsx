@@ -63,7 +63,25 @@ const Cabinet = () => {
   }
   function handleLogout() {
     localStorage.removeItem("auth_user");
+    localStorage.removeItem("cabinet_name");
+    localStorage.removeItem(TIME_KEY);
+    localStorage.removeItem("cabinet_card");
+    localStorage.removeItem("cabinet_card_number");
+    localStorage.removeItem("cabinet_card_holder");
+    localStorage.removeItem("cabinet_card_exp");
     setIsAuth(false);
+    setName("");
+    setCardLinked(false);
+    setSimTime(
+      new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    );
+    setCardNum("");
+    setCardHolder("");
+    setCardExp("");
   }
 
   function saveProfileData() {
