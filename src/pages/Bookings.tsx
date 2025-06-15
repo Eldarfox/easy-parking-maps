@@ -227,7 +227,7 @@ function BookingCard({
     summary = hours * hourly;
     summaryLine = (
       <div className="text-sm text-muted-foreground">
-        {hours} ч × {hourly} ₽/ч = <span className="font-bold">{summary} ₽</span>
+        {hours} ч × {hourly} сом/ч = <span className="font-bold">{summary} сом</span>
       </div>
     );
   }
@@ -261,7 +261,7 @@ function BookingCard({
           <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none"><path d="M7 17v1a2 2 0 002 2h6a2 2 0 002-2v-1M17 17V9a5 5 0 00-10 0v8m10 0H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           Место {booking.place}
         </div>
-        <div className="font-bold text-xl text-black">{summary} ₽</div>
+        <div className="font-bold text-xl text-black">{summary} сом</div>
       </div>
       <div className="flex gap-3 mt-4">
         {isActive && (
