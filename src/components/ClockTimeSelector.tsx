@@ -1,4 +1,3 @@
-
 import React from "react";
 
 type ClockTimeSelectorProps = {
@@ -29,6 +28,29 @@ function getDisplayedHours(hours?: number[]) {
   return Array.from({ length: 16 }, (_, i) => i + 8); // [8,23]
 }
 
+function isInInterval(
+  hour: number,
+  start: number,
+  end: number,
+  displayedHours: number[]
+) {
+  // Поддержка прямого диапазона и диапазона через полночь
+  if (start === null || end === null) return false;
+  if (start === end) return hour === start;
+  const len = displayedHours.length;
+  const si = displayedHours.indexOf(start);
+  const ei = displayedHours.indexOf(end);
+  const hi = displayedHours.indexOf(hour);
+  if (si === -1 || ei === -1 || hi === -1) return false;
+  if (si < ei) {
+    // обычный диапазон
+    return hi >= si && hi <= ei;
+  } else {
+    // через полночь
+    return hi >= si || hi <= ei;
+  }
+}
+
 // Без хуков: только через props.value/props.onChange
 const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
   value,
@@ -51,7 +73,6 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
     };
   }
 
-  // В режиме nightMode диапазон выбирается за один проход (первый и второй клик)
   function selectHour(hour: number) {
     if (isDisabled(hour, disabledHours)) return;
     if (!value || value[0] === null || (value && value[0] !== null && value[1] !== null)) {
@@ -61,26 +82,37 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
       const newStart = value[0];
       const newEnd = hour;
       if (newStart === newEnd) {
-        // Клик по той же: сброс
         onChange(null);
         return;
       }
-      // Всегда в пределах displayedHours
-      const idxStart = displayedHours.indexOf(newStart);
-      const idxEnd = displayedHours.indexOf(newEnd);
-      if (idxStart === -1 || idxEnd === -1) return;
-      const realStart = Math.min(idxStart, idxEnd);
-      const realEnd = Math.max(idxStart, idxEnd);
-      const selHours = displayedHours.slice(realStart, realEnd + 1);
-      // Нет disabled
-      if (selHours.some(h => isDisabled(h, disabledHours))) return;
-      onChange([displayedHours[realStart], displayedHours[realEnd]]);
+      // валидный диапазон — любые два часа
+      onChange([newStart, newEnd]);
     }
   }
 
   // Рендер компонента -- только на propах
   const selection = value ?? [null, null];
-  const showInterval = selection[0] !== null && selection[1] !== null && selection[1]! > selection[0]!;
+  const [start, end] = selection;
+
+  // showInterval: выбрано два (может и в "обратную" сторону)
+  const showInterval = start !== null && end !== null && start !== end;
+
+  // Для рендера выбранного сектора через полночь разбиваем на два:
+  function getArcPaths(start: number, end: number) {
+    if (start === null || end === null) return [];
+    const si = displayedHours.indexOf(start);
+    const ei = displayedHours.indexOf(end);
+    if (si === -1 || ei === -1) return [];
+    if (si < ei) {
+      return [[start, end]];
+    } else {
+      // через полночь, разбиваем
+      return [
+        [start, displayedHours[displayedHours.length - 1]],
+        [displayedHours[0], end],
+      ];
+    }
+  }
 
   return (
     <div className="flex flex-col items-center">
@@ -110,23 +142,25 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
           ) : null
         )}
         {/* Секторы выбранного интервала */}
-        {showInterval && (
-          <path
-            d={describeArc(
-              CENTER,
-              CENTER,
-              RADIUS,
-              hourToDeg(selection[0]!, firstH, lastH),
-              hourToDeg(selection[1]! + 1 > 23 ? firstH : selection[1]! + 1, firstH, lastH)
-            )}
-            fill="rgba(59,130,246,0.18)"
-          />
-        )}
+        {showInterval &&
+          getArcPaths(start!, end!).map(([arcStart, arcEnd], idx) => (
+            <path
+              key={`select-arc-${idx}`}
+              d={describeArc(
+                CENTER,
+                CENTER,
+                RADIUS,
+                hourToDeg(arcStart, firstH, lastH),
+                hourToDeg(arcEnd + 1 > 23 ? firstH : arcEnd + 1, firstH, lastH)
+              )}
+              fill="rgba(59,130,246,0.18)"
+            />
+          ))}
         {/* Часовые отметки и кликабельные зоны */}
         {displayedHours.map((h) => {
           const { x, y } = getHandlePos(h);
           const isSelected =
-            showInterval && h >= selection[0]! && h <= selection[1]!;
+            showInterval && isInInterval(h, start!, end!, displayedHours);
           return (
             <g key={h}>
               <circle
@@ -159,16 +193,22 @@ const ClockTimeSelector: React.FC<ClockTimeSelectorProps> = ({
               {selection[0] === h && (
                 <circle cx={x} cy={y} r={7} fill="#2563eb" opacity={0.65} />
               )}
-              {selection[1] === h && selection[0] !== null && selection[1] !== selection[0] && (
-                <circle cx={x} cy={y} r={7} fill="#1d4ed8" opacity={0.65} />
-              )}
+              {selection[1] === h &&
+                selection[0] !== null &&
+                selection[1] !== selection[0] && (
+                  <circle cx={x} cy={y} r={7} fill="#1d4ed8" opacity={0.65} />
+                )}
             </g>
           );
         })}
       </svg>
       <div className="mt-2 text-sm">
         {showInterval
-          ? `${getLabel(selection[0]!)} - ${getLabel(selection[1]! + 1)}`
+          ? start! < end!
+            ? `${getLabel(start!)} - ${getLabel(end! + 1)}`
+            : `${getLabel(start!)} - ${getLabel(
+                (end! + 1) % 24
+              )} (через полночь)`
           : selection[0] !== null
           ? `Начало: ${getLabel(selection[0]!)}`
           : "Выберите время"}
@@ -199,4 +239,3 @@ function polarToCartesian(centerX: number, centerY: number, radius: number, angl
 }
 
 export default ClockTimeSelector;
-
