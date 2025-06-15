@@ -156,15 +156,8 @@ const Wallet = () => {
         </div>
       </div>
 
-      {/* Модалка привязки карты */}
-      <LinkCardModal
-        open={linkCardModalOpen}
-        onOpenChange={setLinkCardModalOpen}
-        onSuccess={handleLinkCardSuccess}
-      />
-
       {/* Банковская карта */}
-      <div className="hidden">
+      <div>
         <CardSection
           cardLinked={cardLinked}
           cardNum={cardNum}
@@ -173,6 +166,13 @@ const Wallet = () => {
           onUnlinkCard={handleUnlinkCard}
         />
       </div>
+
+      {/* Модалка привязки карты */}
+      <LinkCardModal
+        open={linkCardModalOpen}
+        onOpenChange={setLinkCardModalOpen}
+        onSuccess={handleLinkCardSuccess}
+      />
 
       {/* Модалка подтверждения отвязки карты */}
       <Dialog open={unlinkDialogOpen} onOpenChange={setUnlinkDialogOpen}>
