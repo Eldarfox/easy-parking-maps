@@ -1,4 +1,6 @@
+
 import React, { useEffect, useRef, useState } from "react";
+import { Clock } from "lucide-react";
 
 function pad(num: number, len = 2) {
   return num.toString().padStart(len, "0");
@@ -29,16 +31,20 @@ const ClockField: React.FC<Props> = ({ value, onChange }) => {
     const parsed = parseTimeString(value);
     return parsed || new Date();
   });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(toTimeStr(clock));
+
   const base = useRef<Date>(new Date(clock));
   const startedAt = useRef<number>(Date.now());
 
-  // Синхронизируем внутреннее значение, если передано новое из пропсов
+  // Синхронизация внутреннего значения при изменении value из пропсов
   useEffect(() => {
     const parsed = parseTimeString(value);
     if (parsed) {
       setClock(parsed);
       base.current = new Date(parsed);
       startedAt.current = Date.now();
+      setEditValue(toTimeStr(parsed));
     }
     // eslint-disable-next-line
   }, [value]);
@@ -55,36 +61,73 @@ const ClockField: React.FC<Props> = ({ value, onChange }) => {
     return () => clearInterval(timer);
   }, [running]);
 
-  // Обработка ручного ввода
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    if (/^\d{2}:\d{2}(:\d{2})?$/.test(val)) {
-      onChange(val.length === 5 ? val + ":00" : val);
-      setRunning(false);
-    }
+  // Кнопка (с иконкой Clock) переводит поле в режим ручного редактирования
+  const handleStartEditing = () => {
+    setIsEditing(true);
+    setRunning(false);
+    setEditValue(toTimeStr(clock));
   };
 
+  // Обработка ручного ввода
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditValue(e.target.value);
+  };
+
+  // Подтверждаем время, выходим из режима редактирования и снова включаем ход времени
   const handleManualSet = () => {
-    onChange(toTimeStr(clock));
-    setRunning(true);
+    if (/^\d{2}:\d{2}(:\d{2})?$/.test(editValue)) {
+      let valueToSet = editValue.length === 5 ? editValue + ":00" : editValue;
+      const parsed = parseTimeString(valueToSet);
+      if (parsed) {
+        setClock(parsed);
+        base.current = new Date(parsed);
+        startedAt.current = Date.now();
+        onChange(valueToSet);
+        setIsEditing(false);
+        setRunning(true);
+      }
+    }
   };
 
   return (
     <div className="flex items-center gap-2">
+      <button
+        type="button"
+        className={
+          "p-1 rounded border bg-blue-50 hover:bg-blue-100 transition-colors" +
+          (isEditing ? " border-blue-500" : " border-blue-300")
+        }
+        aria-label="Редактировать часы"
+        onClick={handleStartEditing}
+        tabIndex={0}
+        title="Остановить и редактировать время"
+      >
+        <Clock className={isEditing ? "text-blue-700" : "text-blue-500"} size={22} />
+      </button>
       <input
         type="text"
         pattern="\d{2}:\d{2}(:\d{2})?"
         maxLength={8}
-        value={toTimeStr(clock)}
+        value={isEditing ? editValue : toTimeStr(clock)}
         onChange={handleInputChange}
-        className="text-2xl font-mono w-[120px] px-2 py-1 border rounded bg-white"
+        className={
+          "text-2xl font-mono w-[120px] px-2 py-1 border rounded bg-white" +
+          (isEditing ? " border-blue-500 ring-2 ring-blue-200" : "")
+        }
         aria-label="Редактируемые часы"
+        readOnly={!isEditing}
       />
       <button
         type="button"
         onClick={handleManualSet}
-        className="text-sm px-2 py-1 bg-blue-100 rounded border border-blue-300 hover:bg-blue-200"
+        className={
+          "text-sm px-2 py-1 rounded border " +
+          (isEditing
+            ? "bg-blue-600 text-white border-blue-700 hover:bg-blue-700"
+            : "bg-blue-100 border-blue-300 text-blue-900 hover:bg-blue-200")
+        }
         tabIndex={0}
+        disabled={!isEditing}
       >
         Установить
       </button>
@@ -93,3 +136,4 @@ const ClockField: React.FC<Props> = ({ value, onChange }) => {
 };
 
 export default ClockField;
+
