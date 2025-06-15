@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { parse, isBefore, differenceInMinutes } from "date-fns";
 
 const BOOKINGS_LS_KEY = "bookings_list_lovable";
 
@@ -28,6 +29,13 @@ function BookingStatus({status}: {status: string}) {
   return null;
 }
 
+function getBookingStartDateTime(booking: {date: string, time: string}) {
+  let dateString = booking.date;
+  let timeString = booking.time;
+  let dateTimeString = `${dateString} ${timeString}`;
+  return parse(dateTimeString, "yyyy-MM-dd HH:mm", new Date());
+}
+
 function BookingCard({
   booking,
   onCancel,
@@ -47,6 +55,15 @@ function BookingCard({
   onProlong?: () => void;
 }) {
   const isActive = booking.status === "active";
+
+  let showCancel = true;
+  if (isActive) {
+    const now = new Date();
+    const bookingStart = getBookingStartDateTime(booking);
+    const minutesLeft = differenceInMinutes(bookingStart, now);
+    showCancel = minutesLeft >= 120; // >= 2 часа
+  }
+
   return (
     <div className="bg-white border rounded-xl shadow-sm mb-4 p-5 animate-fade-in">
       <div className="flex items-center mb-1 justify-between">
@@ -81,7 +98,7 @@ function BookingCard({
       <div className="flex gap-3 mt-4">
         {isActive && (
           <>
-            <Button variant="destructive" className="flex-1" onClick={onCancel}>Отменить</Button>
+            {showCancel && <Button variant="destructive" className="flex-1" onClick={onCancel}>Отменить</Button>}
             <Button variant="secondary" className="flex-1" onClick={onProlong}>Продлить</Button>
           </>
         )}
