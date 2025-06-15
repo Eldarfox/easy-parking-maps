@@ -126,32 +126,27 @@ const statusOrder: Record<string, number> = {
   completed: 2,
 };
 
-function BookingStatus({status}: {status: string}) {
+// --- Улучшенная визуализация статусов ---
+function BookingStatus({ status }: { status: string }) {
   if (status === "reserved")
     return (
-      <Badge variant="secondary" className="ml-1 text-yellow-700 bg-yellow-100 border-yellow-400">
-        <span className="flex items-center gap-1">
-          <svg width="18" height="18" viewBox="0 0 24 24" className="text-yellow-600"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm1 15h-2v-2h2Zm0-4h-2V7h2Z"/></svg>
-          Забронировано
-        </span>
+      <Badge variant="secondary" className="ml-1 text-yellow-700 bg-yellow-100 border-yellow-300 px-3 py-1 text-xs font-semibold flex gap-1 items-center shadow-sm rounded-full">
+        <svg width="14" height="14" viewBox="0 0 24 24" className="text-yellow-500"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm1 15h-2v-2h2Zm0-4h-2V7h2Z"/></svg>
+        Забронировано
       </Badge>
     );
   if (status === "active")
     return (
-      <Badge variant="secondary" className="ml-1 text-green-700 bg-green-100 border-green-400">
-        <span className="flex items-center gap-1">
-          <svg width="18" height="18" viewBox="0 0 24 24" className="text-green-600"><path fill="currentColor" d="M9 17L4.5 12.5l1.41-1.42L9 14.17l9.09-9.09L19.5 6.5z"/></svg>
-          Активно
-        </span>
+      <Badge variant="secondary" className="ml-1 text-green-700 bg-green-100 border-green-300 px-3 py-1 text-xs font-semibold flex gap-1 items-center shadow-sm rounded-full">
+        <svg width="14" height="14" viewBox="0 0 24 24" className="text-green-500"><path fill="currentColor" d="M9 17L4.5 12.5l1.41-1.42L9 14.17l9.09-9.09L19.5 6.5z"/></svg>
+        Активно
       </Badge>
     );
   if (status === "completed")
     return (
-      <Badge variant="secondary" className="ml-1 text-blue-700 bg-blue-50 border-blue-300">
-        <span className="flex items-center gap-1">
-          <svg width="18" height="18" viewBox="0 0 24 24" className="text-blue-700"><path fill="currentColor" d="M12 2a10 10 0 1010 10A10.011 10.011 0 0012 2zm1 15h-2v-6h2zm0-8h-2V7h2z"/></svg>
-          Завершено
-        </span>
+      <Badge variant="secondary" className="ml-1 text-blue-700 bg-blue-100 border-blue-300 px-3 py-1 text-xs font-semibold flex gap-1 items-center shadow-sm rounded-full">
+        <svg width="14" height="14" viewBox="0 0 24 24" className="text-blue-600"><path fill="currentColor" d="M12 2a10 10 0 1010 10A10.011 10.011 0 0012 2zm1 15h-2v-6h2zm0-8h-2V7h2z"/></svg>
+        Завершено
       </Badge>
     );
   return null;
@@ -177,106 +172,92 @@ function BookingCard({
   onProlong?: () => void;
 }) {
   const isActive = booking.status === "active";
+
   let showCancel = false;
-
-  // Используем виртуальное время приложения:
   const now = useVirtualNow();
-
-  // ----- DEBUG вывод для отслеживания ситуации -----
-  // Покажем, что получено на входе:
-  console.log(
-    `[DEBUG] booking.date: ${booking.date}, booking.time: ${booking.time}`
-  );
-
   if (isActive) {
     const bookingStart = getBookingStartDateTime(booking);
-
-    // Показываем тип и значение расчёта даты
-    console.log(
-      `[DEBUG] bookingStart type: ${typeof bookingStart}, toString: ${bookingStart.toString()}`
-    );
-
-    // Новая логика: показывать, если до старта осталось больше 2 часов (120 минут)
     if (!isNaN(bookingStart.getTime())) {
-      const isFuture = isBefore(now, bookingStart);
+      const isFuture = now < bookingStart;
       const minutesLeft = differenceInMinutes(bookingStart, now);
       showCancel = isFuture && minutesLeft >= 120;
-
-      // Для отладки:
-      console.log(
-        `Виртуальное сейчас: ${now.toLocaleString()} | ` +
-        `Начало брони: ${bookingStart.toLocaleString()} | ` +
-        `Минут до начала: ${minutesLeft} | ` +
-        `Можно отменить: ${showCancel}`
-      );
-    } else {
-      // Если дата некорректна
-      console.warn(
-        `[WARN] Некорректная дата/время для booking.id=${booking.id}. Проверьте формат!`
-      );
     }
   }
 
-  // --- NEW: расчет суммы ---
   let summary = booking.price;
   let summaryLine = null;
-  // Проверяем — если формат времени "HH:MM - HH:MM", то почасовой
   if (booking.time?.includes("-") && booking.time.match(/\d{2}:\d{2}/g)?.length === 2) {
     const hours = getBookingHours(booking);
     const hourly = getParkingHourlyRate(booking);
     summary = hours * hourly;
     summaryLine = (
-      <div className="text-sm text-muted-foreground flex items-center gap-1">
-        {hours} ч × {hourly}⃀
-        /ч = <span className="font-bold flex items-center gap-1">{summary}⃀</span>
+      <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1 ml-0.5">
+        {hours} ч × {hourly}⃀/ч = <span className="font-bold flex items-center gap-1">{summary}⃀</span>
       </div>
     );
   }
 
+  // Градиентная рамка и плавное появление
   return (
-    <div className="bg-white border rounded-xl shadow-sm mb-4 p-5 animate-fade-in">
-      <div className="flex items-center mb-1 justify-between">
-        <span className="font-semibold text-lg">{booking.title}</span>
-        <BookingStatus status={booking.status} />
-      </div>
-      <div className="text-sm text-muted-foreground flex items-center gap-1 mb-2">
-        <svg className="mr-1 text-gray-400" width="16" height="16" fill="none" viewBox="0 0 24 24">
-          <path
-            fill="currentColor"
-            d="M17.657 16.243l-4.95 4.95a2 2 0 01-2.828 0l-4.95-4.95a8 8 0 1112.728 0zM12 14a2 2 0 100-4 2 2 0 000 4z"
-          />
-        </svg>
-        {booking.address}
-      </div>
-      <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground mb-2">
-        <span className="flex items-center gap-1">
-          <Calendar className="w-4 h-4" /> {booking.date}
-        </span>
-        <span className="flex items-center gap-1">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6h4"/></svg> 
-          {booking.time}
-        </span>
-      </div>
-      <div className="flex flex-wrap gap-4 items-end justify-between">
-        <div className="flex items-center gap-1 text-muted-foreground text-sm">
-          <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none"><path d="M7 17v1a2 2 0 002 2h6a2 2 0 002-2v-1M17 17V9a5 5 0 00-10 0v8m10 0H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          Место {booking.place}
+    <div className="relative flex flex-col bg-white border-0 rounded-2xl shadow-xl p-0 overflow-hidden animate-fade-in hover:shadow-2xl transition-shadow duration-300"
+      style={{
+        boxShadow: "0 8px 30px 0 rgba(139,92,246,.10), 0 1.5px 7px 2px rgba(56,189,248,.13)",
+      }}
+    >
+      <div className="absolute inset-0 rounded-2xl pointer-events-none border-2"
+        style={{
+          borderImage: "linear-gradient(125deg, #8B5CF6 20%, #38BDF8 110%) 1",
+        }}
+      />
+      <div className="relative p-5 flex flex-col gap-3">
+        <div className="flex items-center justify-between mb-0.5">
+          <span className="font-semibold text-lg text-black flex items-center gap-2">
+            {booking.title}
+          </span>
+          <BookingStatus status={booking.status} />
         </div>
-        <div className="font-bold text-xl text-black flex items-center gap-1">{summary}⃀</div>
-      </div>
-      <div className="flex gap-3 mt-4">
-        {isActive && (
-          <>
-            {showCancel && (
-              <Button variant="destructive" className="flex-1" onClick={onCancel}>
-                Отменить
-              </Button>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-0 text-[13px]">
+          <span className="flex items-center gap-1 text-gray-600">
+            <Calendar className="w-4 h-4" /> {booking.date}
+          </span>
+          <span className="flex items-center gap-1 text-gray-500">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6h4"/></svg> 
+            {booking.time}
+          </span>
+          <span className="flex items-center gap-1 text-gray-500">
+            <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none"><path d="M7 17v1a2 2 0 002 2h6a2 2 0 002-2v-1M17 17V9a5 5 0 00-10 0v8m10 0H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Место {booking.place}
+          </span>
+        </div>
+        <div className="flex items-end justify-between gap-3 mt-0">
+          <div className="flex flex-col">
+            <div className="font-semibold text-lg text-indigo-700 flex items-center gap-1">{summary}⃀</div>
+            {summaryLine}
+          </div>
+          <div className="flex gap-2">
+            {isActive && (
+              <>
+                {showCancel && (
+                  <Button variant="destructive" className="min-w-[90px] h-9" onClick={onCancel}>
+                    Отменить
+                  </Button>
+                )}
+                <Button variant="secondary" className="min-w-[90px] h-9" onClick={onProlong}>
+                  Продлить
+                </Button>
+              </>
             )}
-            <Button variant="secondary" className="flex-1" onClick={onProlong}>
-              Продлить
-            </Button>
-          </>
-        )}
+          </div>
+        </div>
+        <div className="flex flex-row gap-1 items-center mt-1 text-xs text-gray-500">
+          <svg className="w-3.5 h-3.5 text-gray-400" width="14" height="14" fill="none" viewBox="0 0 24 24">
+            <path
+              fill="currentColor"
+              d="M17.657 16.243l-4.95 4.95a2 2 0 01-2.828 0l-4.95-4.95a8 8 0 1112.728 0zM12 14a2 2 0 100-4 2 2 0 000 4z"
+            />
+          </svg>
+          {booking.address}
+        </div>
       </div>
     </div>
   );
@@ -285,8 +266,6 @@ function BookingCard({
 const Bookings = () => {
   const [bookings, setBookings] = useState<any[]>([]);
   const { toast } = useToast();
-
-  // Получаем виртуальное время
   const virtualNow = useVirtualNow();
 
   // Функция получения массива броней из localStorage
@@ -419,13 +398,12 @@ const Bookings = () => {
   // eslint-disable-next-line
   }, [virtualNow]);
 
-  // --- Сортировка array перед отображением ---
+  // Сортировка по статусу
   function getSortedBookings(arr: any[]) {
     return [...arr].sort((a, b) => {
       const soA = statusOrder[a.status] ?? 99;
       const soB = statusOrder[b.status] ?? 99;
       if (soA !== soB) return soA - soB;
-      // Если статус одинаков, сортируем по дате начала (ближайшие выше)
       const dsA = getBookingStartDateTime(a);
       const dsB = getBookingStartDateTime(b);
       if (isNaN(dsA.getTime()) || isNaN(dsB.getTime())) return 0;
@@ -433,23 +411,49 @@ const Bookings = () => {
     });
   }
 
+  // Группируем по статусу
   const sortedBookings = getSortedBookings(bookings);
+  const activeBookings = sortedBookings.filter(b => b.status === "active" || b.status === "reserved");
+  const completedBookings = sortedBookings.filter(b => b.status === "completed");
 
   return (
-    <div className="max-w-md mx-auto py-8 px-2">
-      <h1 className="text-3xl font-bold mb-1">Мои бронирования</h1>
-      <div className="text-gray-500 text-base mb-6">История и активные бронирования</div>
+    <div className="max-w-2xl mx-auto py-8 px-2 min-h-screen bg-gradient-to-tr from-white via-blue-50 to-violet-50">
+      <h1 className="text-3xl font-bold mb-1 text-center text-gradient-violet-blue bg-clip-text text-transparent">Мои бронирования</h1>
+      <div className="text-gray-500 text-base mb-8 text-center">История и активные бронирования</div>
+
+      {activeBookings.length > 0 && (
+        <>
+          <div className="text-sm text-indigo-700 font-semibold mb-2 mt-0.5">Активные</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+            {activeBookings.map(b => (
+              <BookingCard
+                key={b.id}
+                booking={b}
+                onCancel={b.status === "active" ? () => handleCancel(b.id) : undefined}
+                onProlong={b.status === "active" ? () => handleProlong(b) : undefined}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {completedBookings.length > 0 && (
+        <>
+          <div className="text-sm text-blue-600 font-semibold mb-2">История</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {completedBookings.map(b => (
+              <BookingCard
+                key={b.id}
+                booking={b}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
       {sortedBookings.length === 0 && (
         <div className="text-sm text-muted-foreground text-center mt-32">Нет активных или прошедших бронирований</div>
       )}
-      {sortedBookings.map((b) => (
-        <BookingCard
-          key={b.id}
-          booking={b}
-          onCancel={b.status === "active" ? () => handleCancel(b.id) : undefined}
-          onProlong={b.status === "active" ? () => handleProlong(b) : undefined}
-        />
-      ))}
     </div>
   );
 };
