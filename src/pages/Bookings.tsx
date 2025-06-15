@@ -178,7 +178,7 @@ function SomIcon({ className = "inline h-5 w-5 mr-1 -mt-0.5" }: { className?: st
         fontWeight="bold"
         fill="#13AD6B"
         fontFamily="Arial, sans-serif"
-      >с</text>
+      >С</text>
     </svg>
   );
 }
