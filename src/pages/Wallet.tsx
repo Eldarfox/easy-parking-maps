@@ -110,6 +110,19 @@ const Wallet = () => {
     });
   };
 
+  // Изменённый обработчик для кнопки "Добавить карту"
+  const handleAddCardClick = () => {
+    if (cardLinked) {
+      toast({
+        title: "Карта уже привязана",
+        description: "У вас уже привязана банковская карта.",
+        duration: 1800,
+      });
+      return;
+    }
+    setLinkCardModalOpen(true);
+  };
+
   return (
     <div className="max-w-md mx-auto flex flex-col gap-7 pt-8 px-2 pb-32">
       {/* Заголовок и подзаголовок */}
@@ -136,8 +149,9 @@ const Wallet = () => {
           <button className="btn-wallet-gradient flex items-center gap-2 flex-1" onClick={handleCustomTopUp}>
             <Plus size={20} /> Пополнить
           </button>
-          <button className="btn-wallet-outline flex items-center gap-2 flex-1" onClick={handleTransactionHistory}>
-            <ArrowRight size={20} /> Перевести
+          {/* Заменяем кнопку "Перевести" на "Добавить карту" */}
+          <button className="btn-wallet-outline flex items-center gap-2 flex-1" onClick={handleAddCardClick}>
+            <CreditCard size={20} /> Добавить карту
           </button>
         </div>
       </div>
