@@ -127,7 +127,10 @@ const Wallet = () => {
           </span>
           <WalletIcon className="opacity-70" size={22} />
         </div>
-        <div className="wallet-balance-value">{balance.toLocaleString()} <span className="wallet-balance-currency">₽</span></div>
+        <div className="wallet-balance-value">
+          {balance.toLocaleString()}{" "}
+          <span className="wallet-balance-currency">сом</span>
+        </div>
         <div className="text-base text-white/70 mb-1">Доступно для использования</div>
 
         <div className="flex gap-3 mt-2">
@@ -149,7 +152,6 @@ const Wallet = () => {
 
       {/* Банковская карта */}
       <div className="hidden">
-        {/* Оставим скрытым: CardSection для отладки */}
         <CardSection
           cardLinked={cardLinked}
           cardNum={cardNum}
@@ -189,7 +191,7 @@ const Wallet = () => {
               className="quick-topup-btn"
               onClick={() => handleQuickTopUp(amount)}
             >
-              {amount.toLocaleString()} <span className="ml-1 text-base">₽</span>
+              {amount.toLocaleString()} <span className="ml-1 text-base">сом</span>
             </button>
           ))}
         </div>
@@ -204,4 +206,3 @@ const Wallet = () => {
 };
 
 export default Wallet;
-
