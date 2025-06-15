@@ -12,6 +12,10 @@ export interface Parking {
     from: number; // Час начала ночного тарифа (24ч)
     to: number;   // Час окончания (например, 8)
   };
+  workingHours: {
+    from: number; // Час открытия (например, 7 = 07:00)
+    to: number;   // Час закрытия (например, 23 = 23:00, 24 = круглосуточно)
+  };
 }
 
 export const mockParkings: Parking[] = [
@@ -29,6 +33,7 @@ export const mockParkings: Parking[] = [
     distance: 200,
     totalSpaces: 4,
     nightHours: { from: 20, to: 8 },
+    workingHours: { from: 7, to: 24 },
   },
   {
     id: "2",
@@ -44,6 +49,7 @@ export const mockParkings: Parking[] = [
     distance: 400,
     totalSpaces: 2,
     nightHours: { from: 21, to: 7 },
+    workingHours: { from: 8, to: 23 },
   },
   {
     id: "3",
@@ -59,6 +65,7 @@ export const mockParkings: Parking[] = [
     distance: 500,
     totalSpaces: 3,
     nightHours: { from: 22, to: 6 },
+    workingHours: { from: 7, to: 20 }, // работает только днем
   },
   {
     id: "4",
@@ -74,5 +81,6 @@ export const mockParkings: Parking[] = [
     distance: 1800,
     totalSpaces: 1,
     nightHours: { from: 19, to: 9 },
+    workingHours: { from: 0, to: 24 }, // круглосуточно
   },
 ];

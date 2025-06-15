@@ -5,7 +5,6 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { mockParkings, Parking } from "@/data/parkings";
 import ParkingModal from "./ParkingModal";
 
-// Добавим типизацию для пропа tariff
 type TariffType = "hourly" | "daily" | "night" | undefined;
 
 const mapInitial = {
@@ -13,6 +12,45 @@ const mapInitial = {
   lat: 42.874621,
   zoom: 13,
 };
+
+function isNightTime(nightFrom: number, nightTo: number, hours: {from: number, to: number}) {
+  // True если ночные часы попадают в рабочие часы парковки (любое пересечение)
+  // например nightFrom=22, nightTo=7; рабочие: from=7, to=20 (не пересекается)
+  // Переведём интервалы в массив часов и ищем пересечение
+  const nightHours: number[] = [];
+  if (nightFrom < nightTo) {
+    for (let h = nightFrom; h < nightTo; h++) nightHours.push(h % 24);
+  } else {
+    for (let h = nightFrom; h < nightFrom + 24; h++) {
+      const hr = h % 24;
+      if (hr >= nightFrom || hr < nightTo) nightHours.push(hr);
+      if (hr === ((nightTo - 1 + 24) % 24)) break;
+    }
+  }
+  const workHours: number[] = [];
+  if (hours.from < hours.to) {
+    for (let h = hours.from; h < hours.to; h++) workHours.push(h % 24);
+  } else {
+    for (let h = hours.from; h < hours.from + 24; h++) {
+      const hr = h % 24;
+      if (hr >= hours.from || hr < hours.to) workHours.push(hr);
+      if (hr === ((hours.to - 1 + 24) % 24)) break;
+    }
+  }
+  // Проверка пересечения
+  return nightHours.some(h => workHours.includes(h));
+}
+
+function isNowInWorkingHours(hours: {from: number, to: number}) {
+  const now = new Date();
+  const hour = now.getHours();
+  if (hours.from < hours.to) {
+    return hour >= hours.from && hour < hours.to;
+  } else {
+    // Круглосуточно или пересечение через 00:00
+    return hour >= hours.from || hour < hours.to;
+  }
+}
 
 const MapLibreParkingMap: React.FC<{ tariff?: TariffType }> = ({ tariff }) => {
   const mapContainer = useRef<HTMLDivElement | null>(null);
@@ -22,6 +60,10 @@ const MapLibreParkingMap: React.FC<{ tariff?: TariffType }> = ({ tariff }) => {
 
   useEffect(() => {
     if (!mapContainer.current) return;
+    if (map.current) {
+      map.current.remove();
+      map.current = null;
+    }
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
@@ -30,7 +72,20 @@ const MapLibreParkingMap: React.FC<{ tariff?: TariffType }> = ({ tariff }) => {
       zoom: mapInitial.zoom,
     });
 
-    mockParkings.forEach((parking) => {
+    // Фильтруем парковки  
+    let shownParkings: Parking[] = [];
+    if (tariff === "night") {
+      shownParkings = mockParkings.filter(
+        p =>
+          p.nightHours &&
+          isNightTime(p.nightHours.from, p.nightHours.to, p.workingHours)
+      );
+    } else {
+      // Показываем только те, которые сейчас работают
+      shownParkings = mockParkings.filter(p => isNowInWorkingHours(p.workingHours));
+    }
+
+    shownParkings.forEach((parking) => {
       const el = document.createElement("div");
       el.className =
         "rounded-full shadow cursor-pointer flex items-center justify-center";
@@ -58,7 +113,7 @@ const MapLibreParkingMap: React.FC<{ tariff?: TariffType }> = ({ tariff }) => {
     return () => {
       map.current?.remove();
     };
-  }, []);
+  }, [tariff]);
 
   return (
     <div
@@ -80,3 +135,4 @@ const MapLibreParkingMap: React.FC<{ tariff?: TariffType }> = ({ tariff }) => {
 };
 
 export default MapLibreParkingMap;
+
