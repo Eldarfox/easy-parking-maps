@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -254,6 +253,13 @@ const Bookings = () => {
     // eslint-disable-next-line
   }, [virtualNow, bookings]);
 
+  // <<< NEW: Загружаем актуальные bookings из localStorage при изменении виртуального времени >>>
+  useEffect(() => {
+    setBookings(initialLoad());
+    // eslint-disable-next-line
+  }, [virtualNow]);
+  // <<< END NEW >>>
+
   useEffect(() => {
     setBookings(initialLoad());
     const onStorage = (e: StorageEvent) => {
@@ -306,4 +312,3 @@ const Bookings = () => {
 };
 
 export default Bookings;
-
