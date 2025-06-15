@@ -1,28 +1,49 @@
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Clock } from "lucide-react";
 
+// Формат даты и времени: "YYYY-MM-DD HH:mm:ss"
 function pad(num: number, len = 2) {
   return num.toString().padStart(len, "0");
 }
 
-function toTimeStr(date: Date) {
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+function toDateTimeStr(date: Date) {
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
+    `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+  );
 }
 
-function parseTimeString(str: string): Date | null {
-  const parts = str.split(":").map(Number);
-  if (parts.length < 2 || parts.some(isNaN)) return null;
-  const [h, m, s = 0] = parts;
-  if (h < 0 || h > 23 || m < 0 || m > 59 || s < 0 || s > 59) return null;
-  const now = new Date();
-  now.setHours(h, m, s, 0);
-  return now;
+function parseDateTimeString(str: string): Date | null {
+  // Ожидаем "YYYY-MM-DD HH:mm:ss" или "YYYY-MM-DD HH:mm" или "YYYY-MM-DD"
+  try {
+    if (!str) return null;
+    const [datePart, timePart = "00:00:00"] = str.trim().split(" ");
+    const [year, month, day] = datePart.split("-").map(Number);
+    let h = 0,
+      m = 0,
+      s = 0;
+    if (timePart) {
+      const timeSplit = timePart.split(":").map(Number);
+      h = timeSplit[0] ?? 0;
+      m = timeSplit[1] ?? 0;
+      s = timeSplit[2] ?? 0;
+    }
+    if (
+      !year || !month || !day ||
+      h < 0 || h > 23 || m < 0 || m > 59 || s < 0 || s > 59
+    )
+      return null;
+    const d = new Date(year, month - 1, day, h, m, s, 0);
+    return d;
+  } catch {
+    return null;
+  }
 }
 
 // Для хранения в localStorage
-function saveClockStateToLS(lsKey: string, baseTime: string, startedAt: number) {
-  localStorage.setItem(lsKey + "_base", baseTime);
+function saveClockStateToLS(lsKey: string, base: string, startedAt: number) {
+  localStorage.setItem(lsKey + "_base", base);
   localStorage.setItem(lsKey + "_startedAt", startedAt.toString());
 }
 
@@ -36,104 +57,92 @@ function restoreClockStateFromLS(lsKey: string): { base: string | null; startedA
 }
 
 type Props = {
-  value: string; // "12:34:56"
+  value: string; // "YYYY-MM-DD HH:mm:ss"
   onChange: (v: string) => void;
   lsKey?: string; // уникальный ключ для ls (по-умолчанию "mainClock")
 };
 
 const ClockField: React.FC<Props> = ({ value, onChange, lsKey = "mainClock" }) => {
-  // Стейт редактирования
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
 
-  // Таймер обновления UI (для tикания)
+  // Для принудительного рендера каждую секунда
   const [, forceTick] = useState(0);
 
-  // Смотрим на данные в localStorage при маунте и изменении value
+  // Смотрим на value/LS на входах
   useEffect(() => {
-    // Показывать всегда актуальное
     setEditValue(value);
   }, [value]);
 
-  // Основная функция вычисления текущего времени (на лету!)
+  // Основная функция вычисления "виртуального" времени
   function getVirtualNow(): Date {
     const { base, startedAt } = restoreClockStateFromLS(lsKey);
-    let show: Date;
     if (base && startedAt) {
-      const parsed = parseTimeString(base);
+      const parsed = parseDateTimeString(base);
       if (parsed) {
         const delta = Math.floor((Date.now() - startedAt) / 1000);
-        show = new Date(parsed);
-        show.setSeconds(show.getSeconds() + delta);
+        const show = new Date(parsed.getTime() + delta * 1000);
         return show;
       }
     }
-    // Default fallbacks - на случай сбоя
-    const fallback = parseTimeString(value) || new Date();
-    return fallback;
+    return parseDateTimeString(value) || new Date();
   }
 
-  // Для input
+  // Только для отображения в инпуте
   const [inputVal, setInputVal] = useState(value);
 
-  // Ставим регулярное обновление визуала только если не редактируем
+  useEffect(() => { setInputVal(value); }, [value]);
+
+  // Обновлять визуал каждую секунду когда не редактируем
   useEffect(() => {
-    if (isEditing) return;
-    const timer = setInterval(() => {
-      forceTick(t => t + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-    // eslint-disable-next-line
+    if (!isEditing) {
+      const timer = setInterval(() => {
+        forceTick(t => t + 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
   }, [isEditing]);
 
-  // Не даём ClockField самому рассинхронизироваться с value
-  useEffect(() => {
-    setInputVal(value);
-  }, [value]);
-
-  // При старт редактирования
+  // Старт редактирования (останавливаем "течение" времени)
   const handleStartEditing = () => {
     setIsEditing(true);
-    setEditValue(toTimeStr(getVirtualNow()));
+    setEditValue(toDateTimeStr(getVirtualNow()));
   };
 
-  // Ввод вручную
+  // Ручной редакт
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditValue(e.target.value);
   };
 
-  // Подтвердить новое время.
+  // Установить новое значение
   const handleManualSet = () => {
-    if (/^\d{2}:\d{2}(:\d{2})?$/.test(editValue)) {
-      let valueToSet = editValue.length === 5 ? editValue + ":00" : editValue;
-      const parsed = parseTimeString(valueToSet);
-      if (parsed) {
-        // Время выбранное пользователем → baseTime
-        const baseTimeStr = toTimeStr(parsed);
-        const startedAt = Date.now();
-        // Сохраняем значения, чтобы любое открытие страницы считало корректно
-        saveClockStateToLS(lsKey, baseTimeStr, startedAt);
-        // Вызываем внешний onChange (если надо)
-        onChange(baseTimeStr);
-        setIsEditing(false);
-        setInputVal(baseTimeStr);
-      }
+    // Ожидаем формат "YYYY-MM-DD HH:mm:ss" или "YYYY-MM-DD HH:mm" или "YYYY-MM-DD"
+    const cleaned = editValue.trim();
+    let parsed = parseDateTimeString(cleaned);
+    if (parsed) {
+      const baseStr = toDateTimeStr(parsed);
+      const startedAt = Date.now();
+      saveClockStateToLS(lsKey, baseStr, startedAt);
+      onChange(baseStr);
+      setIsEditing(false);
+      setInputVal(baseStr);
+    } else {
+      // Мини-валидация: ничего не делать если невалидно
+      // Можно добавить тултип/ошибку тут если надо
     }
   };
 
-  // При маунте: если найдено в LS - синхронизируем
+  // При маунте: если найдено в LS - синхронизуем value через onChange
   useEffect(() => {
     const { base, startedAt } = restoreClockStateFromLS(lsKey);
     if (base && startedAt) {
-      // Просто обновляем value в App через onChange
-      // (чтобы прокинулось наверх, если вдруг LS сбросился)
       onChange(base);
     }
     // eslint-disable-next-line
   }, []);
 
-  // Показываем визуал: если не редактируем - вычисляем виртуальное 'текущее время', иначе показываем editValue
-  const display = isEditing ? editValue : toTimeStr(getVirtualNow());
+  // Вью: если не редактируем - берём из getVirtualNow()
+  const display = isEditing ? editValue : toDateTimeStr(getVirtualNow());
 
   return (
     <div className="flex items-center gap-2">
@@ -143,25 +152,26 @@ const ClockField: React.FC<Props> = ({ value, onChange, lsKey = "mainClock" }) =
           "p-1 rounded border bg-blue-50 hover:bg-blue-100 transition-colors" +
           (isEditing ? " border-blue-500" : " border-blue-300")
         }
-        aria-label="Редактировать часы"
+        aria-label="Редактировать дату и время"
         onClick={handleStartEditing}
         tabIndex={0}
-        title="Остановить и редактировать время"
+        title="Остановить и редактировать дату / время"
       >
         <Clock className={isEditing ? "text-blue-700" : "text-blue-500"} size={22} />
       </button>
       <input
         type="text"
-        pattern="\d{2}:\d{2}(:\d{2})?"
-        maxLength={8}
+        pattern="\d{4}-\d{2}-\d{2}( \d{2}:\d{2}(:\d{2})?)?"
+        maxLength={19}
         value={display}
         onChange={handleInputChange}
         className={
-          "text-2xl font-mono w-[120px] px-2 py-1 border rounded bg-white" +
+          "text-2xl font-mono w-[220px] px-2 py-1 border rounded bg-white" +
           (isEditing ? " border-blue-500 ring-2 ring-blue-200" : "")
         }
-        aria-label="Редактируемые часы"
+        aria-label="Редактируемые дата и время"
         readOnly={!isEditing}
+        placeholder="ГГГГ-MM-ДД чч:мм:сс"
       />
       <button
         type="button"
@@ -182,4 +192,3 @@ const ClockField: React.FC<Props> = ({ value, onChange, lsKey = "mainClock" }) =
 };
 
 export default ClockField;
-
