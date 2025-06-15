@@ -2,11 +2,13 @@
 import { CreditCard, ArrowRight, Plus, Wallet as WalletIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 const quickTopUps = [500, 1000, 2000, 5000];
 
 const Wallet = () => {
   const [balance, setBalance] = useState(0);
+  const { toast } = useToast();
 
   // Функция для пополнения баланса на указанную сумму
   const handleTopUp = (amount: number) => {
@@ -18,11 +20,20 @@ const Wallet = () => {
     handleTopUp(1000);
   };
 
+  // Обработчик быстрого пополнения с уведомлением
+  const handleQuickTopUp = (amount: number) => {
+    toast({
+      title: "Привяжите карту",
+      description: "Для быстрого пополнения необходимо привязать карту."
+    });
+    // Если нужно одновременно пополнять баланс, то раскомментировать следующую строку:
+    // handleTopUp(amount);
+  };
+
   return (
     <div className="max-w-md mx-auto flex flex-col gap-6 pt-8 px-2 pb-32">
       <h1 className="text-2xl font-bold">Кошелек</h1>
       <p className="text-gray-500 mb-2">Управляйте своими финансами</p>
-
       {/* Баланс карточка */}
       <div
         className="rounded-2xl p-5 pb-6 shadow-xl relative overflow-hidden flex flex-col gap-3"
@@ -58,7 +69,6 @@ const Wallet = () => {
           </Button>
         </div>
       </div>
-
       {/* Быстрое пополнение */}
       <div className="bg-white rounded-xl shadow-sm p-4 flex flex-col gap-4">
         <div className="font-bold text-lg">Быстрое пополнение</div>
@@ -68,7 +78,7 @@ const Wallet = () => {
               key={amount}
               variant="outline"
               className="text-lg font-semibold py-4"
-              onClick={() => handleTopUp(amount)}
+              onClick={() => handleQuickTopUp(amount)}
             >
               {amount.toLocaleString()} <span className="ml-1 text-base">⃀</span>
             </Button>
@@ -80,3 +90,4 @@ const Wallet = () => {
 };
 
 export default Wallet;
+
